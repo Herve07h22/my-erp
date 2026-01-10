@@ -1,0 +1,44 @@
+{
+  "views": [
+    {
+      "id": "res_users_form",
+      "model": "res.users",
+      "type": "form",
+      "arch": {
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations utilisateur",
+              "fields": ["name", "login", "email", "lang", "tz"]
+            },
+            {
+              "label": "Statut",
+              "fields": ["active", "partner_id"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "res_users_list",
+      "model": "res.users",
+      "type": "list",
+      "arch": {
+        "fields": ["name", "login", "email", "active"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_res_users",
+      "type": "ir.actions.act_window",
+      "name": "Utilisateurs",
+      "model": "res.users",
+      "views": [["res_users_list", "list"], ["res_users_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_settings_root", "label": "Configuration", "sequence": 100 },
+    { "id": "menu_users", "parent": "menu_settings_root", "action": "action_res_users", "label": "Utilisateurs", "sequence": 1 }
+  ]
+}

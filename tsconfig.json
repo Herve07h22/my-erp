@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["./core/*"],
+      "@addons/*": ["./addons/*"]
+    }
+  },
+  "include": [
+    "server.ts",
+    "core/server/**/*.ts",
+    "addons/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "core/client"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "views": [
+    {
+      "id": "product_form",
+      "model": "product.product",
+      "type": "form",
+      "arch": {
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations générales",
+              "fields": ["name", "type", "categ_id", "default_code", "barcode"]
+            },
+            {
+              "label": "Prix",
+              "fields": ["list_price", "standard_price", "uom_id"]
+            },
+            {
+              "label": "Options",
+              "fields": ["active", "sale_ok", "purchase_ok"]
+            }
+          ],
+          "notebook": [
+            {
+              "label": "Description",
+              "content": {
+                "fields": ["description"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "product_list",
+      "model": "product.product",
+      "type": "list",
+      "arch": {
+        "fields": ["default_code", "name", "type", "list_price", "standard_price", "active"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_products",
+      "type": "ir.actions.act_window",
+      "name": "Produits",
+      "model": "product.product",
+      "views": [["product_list", "list"], ["product_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_sales_products", "parent": "menu_sales_root", "action": "action_products", "label": "Produits", "sequence": 10 }
+  ]
+}

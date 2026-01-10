@@ -1,0 +1,34 @@
+{
+  "product.product": [
+    {
+      "id": 1,
+      "name": "Consulting",
+      "type": "service",
+      "default_code": "CONSULT",
+      "list_price": 150.00,
+      "standard_price": 0,
+      "sale_ok": true,
+      "purchase_ok": false
+    },
+    {
+      "id": 2,
+      "name": "Formation",
+      "type": "service",
+      "default_code": "TRAINING",
+      "list_price": 500.00,
+      "standard_price": 100.00,
+      "sale_ok": true,
+      "purchase_ok": false
+    },
+    {
+      "id": 3,
+      "name": "Licence Logiciel",
+      "type": "service",
+      "default_code": "LICENSE",
+      "list_price": 99.00,
+      "standard_price": 0,
+      "sale_ok": true,
+      "purchase_ok": false
+    }
+  ]
+}

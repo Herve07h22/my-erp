@@ -1,0 +1,86 @@
+{
+  "views": [
+    {
+      "id": "sale_order_form",
+      "model": "sale.order",
+      "type": "form",
+      "arch": {
+        "header": {
+          "buttons": [
+            { "name": "actionSendQuotation", "label": "Envoyer par email", "type": "action", "states": ["draft"] },
+            { "name": "actionConfirm", "label": "Confirmer", "type": "action", "states": ["draft", "sent"] },
+            { "name": "actionCancel", "label": "Annuler", "type": "action", "states": ["draft", "sent", "sale"] },
+            { "name": "actionDraft", "label": "Remettre en brouillon", "type": "action", "states": ["cancel"] },
+            { "name": "actionDone", "label": "Verrouiller", "type": "action", "states": ["sale"] }
+          ],
+          "statusbar": { "field": "state" }
+        },
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations générales",
+              "fields": ["name", "partner_id", "date_order", "validity_date"]
+            },
+            {
+              "label": "Autres informations",
+              "fields": ["user_id", "client_order_ref", "payment_term"]
+            }
+          ],
+          "notebook": [
+            {
+              "label": "Lignes de commande",
+              "content": {
+                "field": "line_ids",
+                "widget": "one2many",
+                "tree": ["product_id", "name", "product_uom_qty", "price_unit", "discount", "price_subtotal"]
+              }
+            },
+            {
+              "label": "Notes",
+              "content": {
+                "fields": ["note"]
+              }
+            }
+          ],
+          "footer": {
+            "fields": [
+              { "field": "amount_untaxed", "widget": "monetary" },
+              { "field": "amount_tax", "widget": "monetary" },
+              { "field": "amount_total", "widget": "monetary" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "sale_order_list",
+      "model": "sale.order",
+      "type": "list",
+      "arch": {
+        "fields": ["name", "partner_id", "date_order", "user_id", "amount_total", "state"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_sale_orders",
+      "type": "ir.actions.act_window",
+      "name": "Commandes",
+      "model": "sale.order",
+      "views": [["sale_order_list", "list"], ["sale_order_form", "form"]]
+    },
+    {
+      "id": "action_sale_quotations",
+      "type": "ir.actions.act_window",
+      "name": "Devis",
+      "model": "sale.order",
+      "domain": [["state", "in", ["draft", "sent"]]],
+      "views": [["sale_order_list", "list"], ["sale_order_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_sales_root", "label": "Ventes", "sequence": 10 },
+    { "id": "menu_sales_quotations", "parent": "menu_sales_root", "action": "action_sale_quotations", "label": "Devis", "sequence": 1 },
+    { "id": "menu_sales_orders", "parent": "menu_sales_root", "action": "action_sale_orders", "label": "Commandes", "sequence": 2 }
+  ]
+}

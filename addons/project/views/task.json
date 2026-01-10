@@ -1,0 +1,85 @@
+{
+  "views": [
+    {
+      "id": "task_form",
+      "model": "project.task",
+      "type": "form",
+      "arch": {
+        "header": {
+          "buttons": [
+            { "name": "actionStart", "label": "Démarrer", "type": "action", "states": ["draft"] },
+            { "name": "actionPending", "label": "En attente", "type": "action", "states": ["open"] },
+            { "name": "actionDone", "label": "Terminé", "type": "action", "states": ["draft", "open", "pending"] },
+            { "name": "actionCancel", "label": "Annuler", "type": "action", "states": ["draft", "open", "pending"] }
+          ],
+          "statusbar": { "field": "state" }
+        },
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations générales",
+              "fields": ["name", "project_id", "user_id", "partner_id", "priority"]
+            },
+            {
+              "label": "Planification",
+              "fields": ["date_deadline", "planned_hours", "effective_hours", "remaining_hours", "progress"]
+            }
+          ],
+          "notebook": [
+            {
+              "label": "Description",
+              "content": {
+                "fields": ["description"]
+              }
+            },
+            {
+              "label": "Feuilles de temps",
+              "content": {
+                "field": "timesheet_ids",
+                "widget": "one2many",
+                "tree": ["date", "user_id", "name", "unit_amount"]
+              }
+            },
+            {
+              "label": "Sous-tâches",
+              "content": {
+                "field": "child_ids",
+                "widget": "one2many",
+                "tree": ["name", "user_id", "state", "date_deadline"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "task_list",
+      "model": "project.task",
+      "type": "list",
+      "arch": {
+        "fields": ["name", "project_id", "user_id", "state", "date_deadline", "planned_hours", "effective_hours", "progress"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_tasks",
+      "type": "ir.actions.act_window",
+      "name": "Tâches",
+      "model": "project.task",
+      "views": [["task_list", "list"], ["task_form", "form"]]
+    },
+    {
+      "id": "action_my_tasks",
+      "type": "ir.actions.act_window",
+      "name": "Mes tâches",
+      "model": "project.task",
+      "domain": [],
+      "views": [["task_list", "list"], ["task_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_all_tasks", "parent": "menu_project_root", "action": "action_tasks", "label": "Toutes les tâches", "sequence": 2 },
+    { "id": "menu_my_tasks", "parent": "menu_project_root", "action": "action_my_tasks", "label": "Mes tâches", "sequence": 3 }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "views": [
+    {
+      "id": "timesheet_line_form",
+      "model": "account.analytic.line",
+      "type": "form",
+      "arch": {
+        "header": {
+          "buttons": [
+            { "name": "actionValidate", "label": "Valider", "type": "action" },
+            { "name": "actionRefuse", "label": "Refuser", "type": "action" }
+          ]
+        },
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations",
+              "fields": ["date", "user_id", "project_id", "task_id"]
+            },
+            {
+              "label": "Temps",
+              "fields": ["unit_amount", "name"]
+            },
+            {
+              "label": "Validation",
+              "fields": ["validated", "validated_date", "validated_by"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "timesheet_line_list",
+      "model": "account.analytic.line",
+      "type": "list",
+      "arch": {
+        "fields": ["date", "user_id", "project_id", "task_id", "name", "unit_amount", "validated"],
+        "allowGrid": true
+      }
+    },
+    {
+      "id": "timesheet_line_grid",
+      "model": "account.analytic.line",
+      "type": "grid",
+      "arch": {
+        "targetHours": 40,
+        "showVariance": true
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_timesheet_lines",
+      "type": "ir.actions.act_window",
+      "name": "Feuilles de temps",
+      "model": "account.analytic.line",
+      "domain": [["is_timesheet", "=", true]],
+      "views": [["timesheet_line_list", "list"], ["timesheet_line_form", "form"]]
+    },
+    {
+      "id": "action_my_timesheets",
+      "type": "ir.actions.act_window",
+      "name": "Mes feuilles de temps",
+      "model": "account.analytic.line",
+      "domain": [["is_timesheet", "=", true]],
+      "views": [["timesheet_line_list", "list"], ["timesheet_line_form", "form"]]
+    },
+    {
+      "id": "action_timesheets_to_validate",
+      "type": "ir.actions.act_window",
+      "name": "À valider",
+      "model": "account.analytic.line",
+      "domain": [["is_timesheet", "=", true], ["validated", "=", false]],
+      "views": [["timesheet_line_list", "list"], ["timesheet_line_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_timesheet_root", "label": "Feuilles de temps", "sequence": 25 },
+    { "id": "menu_my_timesheets", "parent": "menu_timesheet_root", "action": "action_my_timesheets", "label": "Mes feuilles de temps", "sequence": 1 },
+    { "id": "menu_all_timesheets", "parent": "menu_timesheet_root", "action": "action_timesheet_lines", "label": "Toutes les feuilles", "sequence": 2 },
+    { "id": "menu_timesheets_to_validate", "parent": "menu_timesheet_root", "action": "action_timesheets_to_validate", "label": "À valider", "sequence": 3 }
+  ]
+}

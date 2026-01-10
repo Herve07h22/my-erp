@@ -1,0 +1,62 @@
+{
+  "groups": [
+    {
+      "id": "group_project_user",
+      "name": "Utilisateur projet"
+    },
+    {
+      "id": "group_project_manager",
+      "name": "Chef de projet"
+    }
+  ],
+  "access": [
+    {
+      "model": "project.project",
+      "group": "group_project_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "model": "project.project",
+      "group": "group_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "project.task",
+      "group": "group_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "model": "project.task",
+      "group": "group_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "project.task.stage",
+      "group": "group_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "project.tag",
+      "group": "group_project_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "project.task.stage": [
+    { "id": 1, "name": "Nouveau", "sequence": 1, "fold": false },
+    { "id": 2, "name": "En cours", "sequence": 2, "fold": false },
+    { "id": 3, "name": "En revue", "sequence": 3, "fold": false },
+    { "id": 4, "name": "Terminé", "sequence": 4, "fold": true, "is_closed": true },
+    { "id": 5, "name": "Annulé", "sequence": 5, "fold": true, "is_closed": true }
+  ],
+  "project.tag": [
+    { "id": 1, "name": "Urgent", "color": 1 },
+    { "id": 2, "name": "Bug", "color": 4 },
+    { "id": 3, "name": "Amélioration", "color": 10 },
+    { "id": 4, "name": "Documentation", "color": 5 }
+  ]
+}

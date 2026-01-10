@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+
+# Build
+core/client/dist/
+dist/
+
+# Uploads
+uploads/
+
+# Environment
+.env
+.env.local
+.env.*.local
+config/local.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.claude
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.jest/
+
+# Temporary
+tmp/
+temp/

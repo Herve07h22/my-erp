@@ -1,0 +1,16 @@
+{
+  "name": "sales",
+  "version": "1.0.0",
+  "label": "Ventes",
+  "category": "Sales",
+  "description": "Gestion des ventes : devis, commandes, facturation",
+  "depends": ["base"],
+  "autoInstall": false,
+  "models": ["models/*.js"],
+  "views": ["views/*.json"],
+  "data": ["data/init.json"],
+  "security": ["security/access.json"],
+  "migrations": ["migrations/*.js"],
+  "author": "My ERP",
+  "license": "LGPL-3"
+}

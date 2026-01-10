@@ -1,0 +1,20 @@
+{
+  "res.company": [
+    {
+      "id": 1,
+      "name": "Ma Société",
+      "currency_id": "EUR",
+      "country": "France"
+    }
+  ],
+  "res.users": [
+    {
+      "id": 1,
+      "name": "Administrateur",
+      "login": "admin",
+      "password": "admin",
+      "email": "admin@example.com",
+      "lang": "fr_FR"
+    }
+  ]
+}

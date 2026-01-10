@@ -1,0 +1,16 @@
+{
+  "name": "timesheet",
+  "version": "1.0.0",
+  "label": "Feuilles de temps",
+  "category": "Services/Timesheet",
+  "description": "Suivi du temps passé sur les projets et tâches",
+  "depends": ["base", "project"],
+  "autoInstall": false,
+  "models": ["models/*.js"],
+  "views": ["views/*.json"],
+  "data": [],
+  "security": ["security/access.json"],
+  "migrations": ["migrations/*.js"],
+  "author": "My ERP",
+  "license": "LGPL-3"
+}

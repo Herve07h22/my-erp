@@ -1,0 +1,46 @@
+{
+  "groups": [
+    {
+      "id": "group_user",
+      "name": "Utilisateur interne"
+    },
+    {
+      "id": "group_admin",
+      "name": "Administrateur"
+    }
+  ],
+  "access": [
+    {
+      "model": "res.partner",
+      "group": "group_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "model": "res.partner",
+      "group": "group_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "res.users",
+      "group": "group_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "res.company",
+      "group": "group_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    }
+  ]
+}

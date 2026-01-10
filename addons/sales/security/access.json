@@ -1,0 +1,62 @@
+{
+  "groups": [
+    {
+      "id": "group_sale_user",
+      "name": "Commercial"
+    },
+    {
+      "id": "group_sale_manager",
+      "name": "Responsable des ventes"
+    }
+  ],
+  "access": [
+    {
+      "model": "product.product",
+      "group": "group_sale_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "model": "product.product",
+      "group": "group_sale_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "sale.order",
+      "group": "group_sale_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "model": "sale.order",
+      "group": "group_sale_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "sale.order.line",
+      "group": "group_sale_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "model": "sale.order.line",
+      "group": "group_sale_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "label": "Gestion de Projet",
+  "category": "Services/Project",
+  "description": "Gestion de projets et tâches avec suivi du temps",
+  "depends": ["base"],
+  "autoInstall": false,
+  "models": ["models/*.js"],
+  "views": ["views/*.json"],
+  "data": ["data/init.json"],
+  "security": ["security/access.json"],
+  "migrations": ["migrations/*.js"],
+  "author": "My ERP",
+  "license": "LGPL-3"
+}

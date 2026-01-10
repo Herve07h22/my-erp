@@ -1,0 +1,31 @@
+{
+  "server": {
+    "port": 8069,
+    "host": "localhost"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "my_erp",
+    "user": "postgres",
+    "password": "postgres",
+    "max": 20,
+    "idleTimeoutMillis": 30000
+  },
+  "addons_path": [
+    "./addons"
+  ],
+  "modules": [
+    "base",
+    "sales",
+    "project",
+    "timesheet"
+  ],
+  "session": {
+    "secret": "change-this-secret-in-production",
+    "maxAge": 86400000
+  },
+  "logging": {
+    "level": "info"
+  }
+}

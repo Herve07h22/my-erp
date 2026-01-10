@@ -1,0 +1,65 @@
+{
+  "views": [
+    {
+      "id": "res_partner_form",
+      "model": "res.partner",
+      "type": "form",
+      "arch": {
+        "header": {
+          "buttons": [
+            { "name": "actionArchive", "label": "Archiver", "type": "action" }
+          ]
+        },
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations générales",
+              "fields": ["name", "company_type", "is_company", "parent_id", "email", "phone", "mobile"]
+            },
+            {
+              "label": "Adresse",
+              "fields": ["street", "street2", "zip", "city", "country"]
+            }
+          ],
+          "notebook": [
+            {
+              "label": "Informations complémentaires",
+              "content": {
+                "fields": ["vat", "website", "comment"]
+              }
+            },
+            {
+              "label": "Contacts",
+              "content": {
+                "field": "child_ids",
+                "widget": "one2many",
+                "tree": ["name", "email", "phone"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "res_partner_list",
+      "model": "res.partner",
+      "type": "list",
+      "arch": {
+        "fields": ["name", "email", "phone", "city", "country", "is_company"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_res_partner",
+      "type": "ir.actions.act_window",
+      "name": "Contacts",
+      "model": "res.partner",
+      "views": [["res_partner_list", "list"], ["res_partner_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_contacts_root", "label": "Contacts", "sequence": 5 },
+    { "id": "menu_contacts_all", "parent": "menu_contacts_root", "action": "action_res_partner", "label": "Tous les contacts", "sequence": 1 }
+  ]
+}

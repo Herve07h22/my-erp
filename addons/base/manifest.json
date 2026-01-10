@@ -1,0 +1,16 @@
+{
+  "name": "base",
+  "version": "1.0.0",
+  "label": "Base",
+  "category": "Hidden",
+  "description": "Module de base contenant les modèles fondamentaux (utilisateurs, partenaires, configuration)",
+  "depends": [],
+  "autoInstall": true,
+  "models": ["models/*.js"],
+  "views": ["views/*.json"],
+  "data": ["data/init.json"],
+  "security": ["security/access.json"],
+  "migrations": ["migrations/*.js"],
+  "author": "My ERP",
+  "license": "LGPL-3"
+}

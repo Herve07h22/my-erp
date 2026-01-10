@@ -1,0 +1,76 @@
+{
+  "views": [
+    {
+      "id": "project_form",
+      "model": "project.project",
+      "type": "form",
+      "arch": {
+        "header": {
+          "buttons": [
+            { "name": "actionOpen", "label": "Démarrer", "type": "action", "states": ["draft"] },
+            { "name": "actionPending", "label": "Mettre en attente", "type": "action", "states": ["open"] },
+            { "name": "actionClose", "label": "Clôturer", "type": "action", "states": ["open", "pending"] },
+            { "name": "actionCancel", "label": "Annuler", "type": "action", "states": ["draft", "open", "pending"] },
+            { "name": "actionDraft", "label": "Réouvrir", "type": "action", "states": ["close", "cancelled"] }
+          ],
+          "statusbar": { "field": "state" }
+        },
+        "sheet": {
+          "groups": [
+            {
+              "label": "Informations générales",
+              "fields": ["name", "partner_id", "user_id", "privacy_visibility"]
+            },
+            {
+              "label": "Planification",
+              "fields": ["date_start", "date_end", "allocated_hours", "allow_timesheets"]
+            }
+          ],
+          "notebook": [
+            {
+              "label": "Description",
+              "content": {
+                "fields": ["description"]
+              }
+            },
+            {
+              "label": "Tâches",
+              "content": {
+                "field": "task_ids",
+                "widget": "one2many",
+                "tree": ["name", "user_id", "state", "date_deadline", "planned_hours", "progress"]
+              }
+            }
+          ],
+          "footer": {
+            "fields": [
+              { "field": "task_count" },
+              { "field": "total_timesheet_time" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "project_list",
+      "model": "project.project",
+      "type": "list",
+      "arch": {
+        "fields": ["name", "partner_id", "user_id", "state", "task_count", "total_timesheet_time"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_projects",
+      "type": "ir.actions.act_window",
+      "name": "Projets",
+      "model": "project.project",
+      "views": [["project_list", "list"], ["project_form", "form"]]
+    }
+  ],
+  "menus": [
+    { "id": "menu_project_root", "label": "Projets", "sequence": 20 },
+    { "id": "menu_projects", "parent": "menu_project_root", "action": "action_projects", "label": "Tous les projets", "sequence": 1 }
+  ]
+}

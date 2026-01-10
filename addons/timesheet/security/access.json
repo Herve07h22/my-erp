@@ -1,0 +1,31 @@
+{
+  "groups": [
+    {
+      "id": "group_timesheet_user",
+      "name": "Utilisateur feuille de temps"
+    },
+    {
+      "id": "group_timesheet_manager",
+      "name": "Responsable feuilles de temps"
+    }
+  ],
+  "access": [
+    {
+      "model": "account.analytic.line",
+      "group": "group_timesheet_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true,
+      "domain": [["user_id", "=", "user.id"]]
+    },
+    {
+      "model": "account.analytic.line",
+      "group": "group_timesheet_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    }
+  ]
+}
