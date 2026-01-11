@@ -328,7 +328,7 @@ export class ModuleLoader {
 
     const files = fs
       .readdirSync(migrationsPath)
-      .filter((f) => f.endsWith('.ts') || f.endsWith('.js'))
+      .filter((f) => f.endsWith('.ts') || f.endsWith('.js') || f.endsWith('.cjs'))
       .sort();
 
     for (const file of files) {
@@ -356,14 +356,65 @@ export class ModuleLoader {
   private async loadData(manifest: ModuleManifest): Promise<void> {
     const dataFiles = manifest.data || [];
 
+    if (!this.pool) return;
+
     for (const dataFile of dataFiles) {
       const dataPath = path.join(manifest._path!, dataFile);
 
       if (!fs.existsSync(dataPath)) continue;
 
       try {
-        JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-        // TODO: Insérer les données via le registry
+        const data: Record<string, Record<string, unknown>[]> = JSON.parse(
+          fs.readFileSync(dataPath, 'utf-8')
+        );
+
+        for (const [modelName, records] of Object.entries(data)) {
+          const tableName = modelName.replace(/\./g, '_');
+          let insertedCount = 0;
+
+          for (const record of records) {
+            // Vérifier si l'enregistrement existe déjà
+            const recordId = record.id;
+            if (recordId !== undefined) {
+              const existing = await this.pool.query(
+                `SELECT 1 FROM ${tableName} WHERE id = $1`,
+                [recordId]
+              );
+              if (existing.rows.length > 0) {
+                continue; // Skip existing records
+              }
+            }
+
+            // Insérer l'enregistrement
+            const fields = Object.keys(record);
+            const values = Object.values(record);
+            const placeholders = fields.map((_, i) => `$${i + 1}`);
+
+            const sql = `
+              INSERT INTO ${tableName} (${fields.join(', ')})
+              VALUES (${placeholders.join(', ')})
+            `;
+
+            await this.pool.query(sql, values);
+            insertedCount++;
+          }
+
+          // Mettre à jour la séquence PostgreSQL si on a inséré avec des IDs explicites
+          if (records.some((r) => r.id !== undefined)) {
+            await this.pool.query(`
+              SELECT setval(
+                pg_get_serial_sequence('${tableName}', 'id'),
+                COALESCE((SELECT MAX(id) FROM ${tableName}), 0) + 1,
+                false
+              )
+            `);
+          }
+
+          if (insertedCount > 0) {
+            console.log(`    Inserted ${insertedCount} record(s) for ${modelName}`);
+          }
+        }
+
         console.log(`    Loaded data from: ${dataFile}`);
       } catch (err) {
         console.error(

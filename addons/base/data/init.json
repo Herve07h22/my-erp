@@ -16,18 +16,5 @@
       "email": "admin@example.com",
       "lang": "fr_FR"
     }
-  ],
-  "ir.sequence": [
-    {
-      "id": 1,
-      "name": "Devis / Commande",
-      "code": "sale.order",
-      "prefix": "SO%(year)",
-      "padding": 5,
-      "number_next": 1,
-      "number_increment": 1,
-      "use_date_range": true,
-      "active": true
-    }
   ]
 }
