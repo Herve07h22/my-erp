@@ -63,11 +63,27 @@ class Project extends BaseModel {
     total_timesheet_time: {
       type: 'float',
       compute: '_computeTotalTimesheetTime',
+      store: true,
+      default: 0,
       label: 'Temps total pointé',
     },
     create_date: { type: 'datetime', label: 'Date de création' },
     write_date: { type: 'datetime', label: 'Date de modification' },
   };
+
+  /**
+   * Override pour retourner le bon type
+   */
+  override async create(values: Record<string, unknown>): Promise<Project> {
+    return (await super.create(values)) as Project;
+  }
+
+  /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<Project> {
+    return (await super.browse(ids)) as Project;
+  }
 
   /**
    * Ouvre le projet

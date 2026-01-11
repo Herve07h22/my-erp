@@ -1,4 +1,26 @@
-import type { Pool, PoolClient } from 'pg';
+import type { QueryResult, QueryResultRow } from 'pg';
+
+// Forward declaration pour éviter les dépendances circulaires
+// BaseModel sera importé dans les fichiers qui utilisent ModelType
+declare class BaseModel {
+  // Déclaration minimale pour le type helper
+}
+
+// Interface commune pour les pools de base de données (réel ou mock)
+export interface Queryable {
+  query<T extends QueryResultRow = QueryResultRow>(
+    sql: string,
+    params?: unknown[]
+  ): Promise<QueryResult<T>>;
+}
+
+// Type helper pour accepter soit une classe (constructeur) soit un type d'instance
+// Permet d'écrire env.model<typeof ResPartner>('res.partner') ou env.model<ResPartnerInstance>('res.partner')
+// Si T est un constructeur (typeof ClassName), on extrait le type d'instance avec InstanceType
+// Sinon, on assume que T est déjà un type d'instance
+export type ModelType<T> = T extends new (...args: any[]) => any
+  ? InstanceType<T>
+  : T;
 
 // Types des champs supportés
 export type FieldType =
@@ -96,9 +118,25 @@ export interface RecordData {
   [key: string]: unknown;
 }
 
+// Valeur many2one (peut être un objet avec id/name ou juste un ID)
+export interface Many2OneValue {
+  id: number;
+  name?: string;
+}
+
+// Type guard pour vérifier si une valeur est un Many2OneValue
+export function isMany2OneValue(value: unknown): value is Many2OneValue {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof (value as { id: unknown }).id === 'number'
+  );
+}
+
 // Options de l'environnement
 export interface EnvironmentOptions {
-  pool: Pool | { query: PoolClient['query'] };
+  pool: Queryable;
   registry: ModelRegistryInterface;
   user?: RecordData | null;
   context?: Record<string, unknown>;
@@ -150,7 +188,7 @@ export interface ModelInstance {
 
 // Interface de l'environnement
 export interface EnvironmentInterface {
-  pool: Pool | { query: PoolClient['query'] };
+  pool: Queryable;
   registry: ModelRegistryInterface;
   user: RecordData | null;
   context: Record<string, unknown>;

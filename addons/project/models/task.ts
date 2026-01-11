@@ -93,6 +93,20 @@ class ProjectTask extends BaseModel {
   };
 
   /**
+   * Override pour retourner le bon type
+   */
+  override async create(values: Record<string, unknown>): Promise<ProjectTask> {
+    return (await super.create(values)) as ProjectTask;
+  }
+
+  /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<ProjectTask> {
+    return (await super.browse(ids)) as ProjectTask;
+  }
+
+  /**
    * Démarre la tâche
    */
   async actionStart(): Promise<boolean> {

@@ -53,16 +53,45 @@ class ResPartner extends BaseModel {
   };
 
   /**
+   * Override pour retourner le bon type
+   */
+  override async create(values: Record<string, unknown>): Promise<ResPartner> {
+    return (await super.create(values)) as ResPartner;
+  }
+
+  /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<ResPartner> {
+    return (await super.browse(ids)) as ResPartner;
+  }
+
+  /**
    * Retourne le nom complet avec l'adresse
    */
   async nameGet(): Promise<PartnerNameGetResult[]> {
-    return this.records.map((r) => ({
-      id: r.id,
-      name: r.name as string,
-      display_name: r.is_company
-        ? (r.name as string)
-        : `${r.name}${r.parent_id ? ' (' + r.parent_id + ')' : ''}`,
-    }));
+    const results: PartnerNameGetResult[] = [];
+    
+    for (const r of this.records) {
+      let displayName = r.name as string;
+      
+      if (!r.is_company && r.parent_id) {
+        // Résoudre le nom du parent
+        const Parent = this.env.model('res.partner');
+        const parent = await Parent.browse(r.parent_id as number);
+        if (parent.first) {
+          displayName = `${r.name} (${parent.first.name})`;
+        }
+      }
+      
+      results.push({
+        id: r.id,
+        name: r.name as string,
+        display_name: displayName,
+      });
+    }
+    
+    return results;
   }
 
   /**

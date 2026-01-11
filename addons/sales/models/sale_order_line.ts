@@ -124,8 +124,8 @@ class SaleOrderLine extends BaseModel {
 
     const Order = this.env.model('sale.order');
     const order = await Order.browse(orderId);
-    if (order.length) {
-      await (order as unknown as { _computeAmounts: () => Promise<void> })._computeAmounts();
+    if (order.length && '_computeAmounts' in order && typeof (order as { _computeAmounts: () => Promise<void> })._computeAmounts === 'function') {
+      await (order as { _computeAmounts: () => Promise<void> })._computeAmounts();
     }
   }
 

@@ -146,7 +146,11 @@ export function FieldRenderer({
         // Le backend retourne { id, name } pour les many2one, extraire l'ID
         let many2oneValue: number | null = null;
         if (value !== null && value !== undefined) {
-          if (typeof value === 'object' && 'id' in value) {
+          if (
+            typeof value === 'object' &&
+            'id' in value &&
+            typeof (value as { id: unknown }).id === 'number'
+          ) {
             many2oneValue = (value as { id: number }).id;
           } else if (typeof value === 'number') {
             many2oneValue = value;

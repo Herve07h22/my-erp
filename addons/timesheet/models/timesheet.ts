@@ -12,7 +12,7 @@ interface ProjectSummary {
   hours: number;
 }
 
-interface WeeklySummary {
+export interface WeeklySummary {
   week_start: Date;
   total_hours: number;
   by_day: DaySummary[];
@@ -76,9 +76,16 @@ class TimesheetLine extends BaseModel {
   };
 
   /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<TimesheetLine> {
+    return (await super.browse(ids)) as TimesheetLine;
+  }
+
+  /**
    * Crée une ligne de timesheet avec mise à jour des heures de la tâche
    */
-  override async create(values: Record<string, unknown>): Promise<BaseModel> {
+  override async create(values: Record<string, unknown>): Promise<TimesheetLine> {
     values.is_timesheet = true;
 
     // Récupérer le partenaire du projet si disponible
@@ -90,7 +97,7 @@ class TimesheetLine extends BaseModel {
       }
     }
 
-    const result = await super.create(values);
+    const result = (await super.create(values)) as TimesheetLine;
 
     // Mettre à jour les heures de la tâche
     if (values.task_id) {

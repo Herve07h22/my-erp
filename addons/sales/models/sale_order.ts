@@ -1,5 +1,5 @@
 import { BaseModel } from '../../../core/server/orm/index.js';
-import type { FieldsCollection, RecordData } from '../../../core/server/orm/types.js';
+import type { FieldsCollection } from '../../../core/server/orm/types.js';
 
 /**
  * Modèle Commande de vente
@@ -56,6 +56,13 @@ class SaleOrder extends BaseModel {
   };
 
   /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<SaleOrder> {
+    return (await super.browse(ids)) as SaleOrder;
+  }
+
+  /**
    * Génère une nouvelle référence de commande
    */
   private async _generateName(): Promise<string> {
@@ -71,11 +78,11 @@ class SaleOrder extends BaseModel {
   /**
    * Crée une commande avec génération automatique du nom
    */
-  override async create(values: Record<string, unknown>): Promise<BaseModel> {
+  override async create(values: Record<string, unknown>): Promise<SaleOrder> {
     if (!values.name) {
       values.name = await this._generateName();
     }
-    return super.create(values);
+    return (await super.create(values)) as SaleOrder;
   }
 
   /**

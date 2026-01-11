@@ -12,6 +12,8 @@ import type {
   SearchOptions,
 } from './types.js';
 
+import { isMany2OneValue } from './types.js';
+
 /**
  * Registry central des modèles
  * Gère l'enregistrement et l'extension des modèles
@@ -89,26 +91,36 @@ export class ModelRegistry implements ModelRegistryInterface {
       // Fusionner les méthodes
       if (ext.methods) {
         for (const [methodName, fn] of Object.entries(ext.methods)) {
-          const proto = CompiledModel.prototype as unknown as Record<
-            string,
-            ((...args: unknown[]) => unknown) | undefined
-          >;
-          const original = proto[methodName];
+          // Type guard pour vérifier si une propriété existe sur le prototype
+          const proto = CompiledModel.prototype;
+          const original = methodName in proto && typeof proto[methodName as keyof typeof proto] === 'function'
+            ? (proto[methodName as keyof typeof proto] as (...args: unknown[]) => unknown)
+            : undefined;
 
           if (original) {
             // Wrapper pour supporter _super()
-            proto[methodName] = function (
-              this: BaseModel & { _super?: (...args: unknown[]) => unknown },
-              ...args: unknown[]
-            ): unknown {
-              const prevSuper = this._super;
-              this._super = original.bind(this);
-              const result = fn.apply(this, args);
-              this._super = prevSuper;
-              return result;
-            };
+            Object.defineProperty(proto, methodName, {
+              value: function (
+                this: BaseModel & { _super?: (...args: unknown[]) => unknown },
+                ...args: unknown[]
+              ): unknown {
+                const prevSuper = this._super;
+                this._super = original.bind(this);
+                const result = fn.apply(this, args);
+                this._super = prevSuper;
+                return result;
+              },
+              writable: true,
+              enumerable: true,
+              configurable: true,
+            });
           } else {
-            proto[methodName] = fn;
+            Object.defineProperty(proto, methodName, {
+              value: fn,
+              writable: true,
+              enumerable: true,
+              configurable: true,
+            });
           }
         }
       }
@@ -166,8 +178,14 @@ export class BaseModel {
       }
     }
     // Pour les many2one, accepter à la fois { id, name } et un ID simple
-    if (fieldType === 'many2one' && value !== null && typeof value === 'object' && 'id' in value) {
-      return (value as { id: number }).id;
+    if (fieldType === 'many2one') {
+      if (isMany2OneValue(value)) {
+        return value.id;
+      }
+      if (typeof value === 'number') {
+        return value;
+      }
+      return null;
     }
     return value;
   }
@@ -331,9 +349,14 @@ export class BaseModel {
 
         // Si le champ a une fonction compute, l'appeler
         if (fieldDef?.compute) {
-          const computeFn = (this as unknown as Record<string, (record: RecordData) => Promise<unknown>>)[fieldDef.compute];
-          if (typeof computeFn === 'function') {
-            data[fieldName] = await computeFn.call(this, record);
+          const computeMethodName = fieldDef.compute;
+          if (computeMethodName in this) {
+            const computeMethod = Object.getOwnPropertyDescriptor(this, computeMethodName)?.value;
+            if (typeof computeMethod === 'function') {
+              data[fieldName] = await (computeMethod as (record: RecordData) => Promise<unknown>).call(this, record);
+            } else {
+              data[fieldName] = record[fieldName];
+            }
           } else {
             data[fieldName] = record[fieldName];
           }

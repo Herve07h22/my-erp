@@ -1,5 +1,5 @@
 import { BaseModel } from '../../../core/server/orm/index.js';
-import type { FieldsCollection, RecordData } from '../../../core/server/orm/types.js';
+import type { FieldsCollection, RecordData, EnvironmentInterface } from '../../../core/server/orm/types.js';
 
 /**
  * Modèle Utilisateur
@@ -25,7 +25,22 @@ class ResUsers extends BaseModel {
   };
 
   /**
+   * Override pour retourner le bon type
+   */
+  override async create(values: Record<string, unknown>): Promise<ResUsers> {
+    return (await super.create(values)) as ResUsers;
+  }
+
+  /**
+   * Override pour retourner le bon type
+   */
+  override async browse(ids: number | number[]): Promise<ResUsers> {
+    return (await super.browse(ids)) as ResUsers;
+  }
+
+  /**
    * Vérifie les identifiants de connexion
+   * Peut être appelée comme méthode d'instance ou statique
    */
   async authenticate(login: string, password: string): Promise<RecordData | null> {
     const users = await this.search([
@@ -44,6 +59,18 @@ class ResUsers extends BaseModel {
     }
 
     return null;
+  }
+
+  /**
+   * Vérifie les identifiants de connexion (méthode statique)
+   */
+  static async authenticate(
+    env: EnvironmentInterface,
+    login: string,
+    password: string
+  ): Promise<RecordData | null> {
+    const ResUsers = env.model<ResUsers>('res.users');
+    return await ResUsers.authenticate(login, password);
   }
 
   /**

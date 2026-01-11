@@ -27,6 +27,8 @@ addons/
     │   └── property.json
     ├── security/
     │   └── access.json
+    ├── tests/
+    │   └── views.test.ts
     └── data/
         └── init.json (optionnel)
 ```
@@ -34,13 +36,14 @@ addons/
 Créez le dossier et les fichiers :
 
 ```bash
-mkdir -p addons/real_estate/{models,migrations,views,security,data}
+mkdir -p addons/real_estate/{models,migrations,views,security,tests,data}
 touch addons/real_estate/manifest.json
 touch addons/real_estate/models/index.ts
 touch addons/real_estate/models/property.ts
 touch addons/real_estate/migrations/001_initial.js
 touch addons/real_estate/views/property.json
 touch addons/real_estate/security/access.json
+touch addons/real_estate/tests/views.test.ts
 ```
 
 ## Étape 2 : Créer le manifest.json
@@ -651,7 +654,55 @@ Le serveur va :
 - Vous devriez voir un nouveau menu "Immobilier" dans la barre latérale
 - Cliquez dessus pour accéder aux annonces
 
-## Étape 9 : Tester l'addon
+## Étape 9 : Ajouter les tests automatiques
+
+Chaque addon devrait avoir des tests pour valider ses vues. Le framework fournit un helper réutilisable.
+
+1. **Créer le dossier et fichier de tests** :
+
+```bash
+mkdir -p addons/real_estate/tests
+touch addons/real_estate/tests/views.test.ts
+```
+
+2. **Créer le test des vues** :
+
+**`addons/real_estate/tests/views.test.ts`** :
+
+```typescript
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createAddonViewsTests } from '../../../core/test-helpers/addon-views-tests.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+createAddonViewsTests({
+  addonName: 'real_estate',
+  addonPath: path.resolve(__dirname, '..'),
+  dependencies: ['base'],
+});
+```
+
+Ce simple fichier génère automatiquement 2 tests :
+- **Validation JSON** : Vérifie que les fichiers de vues respectent le schéma Zod
+- **Cohérence modèle** : Vérifie que les champs, actions de boutons et modèles référencés existent
+
+3. **Lancer les tests** :
+
+```bash
+pnpm test -- --run addons/real_estate
+```
+
+4. **Structure de tests recommandée** :
+
+```
+addons/real_estate/
+├── tests/
+│   ├── views.test.ts      # Tests de validation des vues
+│   └── actions.test.ts    # Tests des actions métier (optionnel)
+```
+
+## Étape 10 : Tester manuellement l'addon
 
 1. **Créer une annonce** :
    - Cliquez sur "Toutes les annonces"
@@ -682,8 +733,10 @@ addons/real_estate/
 │   └── 001_initial.js
 ├── views/
 │   └── property.json
-└── security/
-    └── access.json
+├── security/
+│   └── access.json
+└── tests/
+    └── views.test.ts
 ```
 
 ## Prochaines étapes
@@ -716,5 +769,6 @@ Vous avez appris à :
 - ✅ Créer des actions et menus
 - ✅ Ajouter des méthodes métier au modèle
 - ✅ Gérer les images (via URLs pour l'instant)
+- ✅ Ajouter des tests automatiques pour valider les vues
 
 Le système est maintenant prêt à gérer vos annonces immobilières !

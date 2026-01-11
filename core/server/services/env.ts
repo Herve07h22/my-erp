@@ -3,18 +3,34 @@
  * Fournit l'accès aux modèles et services dans le contexte d'une requête
  */
 
-import type { Pool, PoolClient } from 'pg';
+import type { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import type { Request, Response, NextFunction } from 'express';
 import type {
   EnvironmentInterface,
   EnvironmentOptions,
   ModelRegistryInterface,
+  ModelType,
+  Queryable,
   RecordData,
 } from '../orm/types.js';
 import { BaseModel } from '../orm/model.js';
 
+/**
+ * Wrapper pour Pool qui implémente Queryable
+ */
+class PoolQueryable implements Queryable {
+  constructor(public readonly pool: Pool) {}
+
+  async query<T extends QueryResultRow = QueryResultRow>(
+    sql: string,
+    params?: unknown[]
+  ): Promise<QueryResult<T>> {
+    return this.pool.query<T>(sql, params as never[]);
+  }
+}
+
 export class Environment implements EnvironmentInterface {
-  pool: Pool | { query: PoolClient['query'] };
+  pool: Queryable;
   registry: ModelRegistryInterface;
   user: RecordData | null;
   context: Record<string, unknown>;
@@ -29,10 +45,14 @@ export class Environment implements EnvironmentInterface {
   /**
    * Accède à un modèle par son nom
    * Retourne une nouvelle instance du modèle dans cet environnement
+   * 
+   * @example
+   * // Utilise typeof pour passer la classe
+   * const ResPartner = env.model<typeof ResPartner>('res.partner');
    */
-  model(modelName: string): BaseModel {
+  model<T = BaseModel>(modelName: string): ModelType<T> {
     const ModelClass = this.registry.compile(modelName);
-    return new ModelClass(this) as BaseModel;
+    return new ModelClass(this) as ModelType<T>;
   }
 
   /**
@@ -70,13 +90,27 @@ export class Environment implements EnvironmentInterface {
    * Exécute une fonction dans une transaction
    */
   async transaction<T>(fn: (env: Environment) => Promise<T>): Promise<T> {
-    const client = await (this.pool as Pool).connect();
+    // Pour les transactions, on a besoin d'un vrai Pool
+    if (!(this.pool instanceof PoolQueryable)) {
+      throw new Error('Transactions require a real Pool instance');
+    }
+
+    const client = await this.pool.pool.connect();
 
     try {
       await client.query('BEGIN');
 
+      const txQueryable: Queryable = {
+        query: async <T extends QueryResultRow = QueryResultRow>(
+          sql: string,
+          params?: unknown[]
+        ): Promise<QueryResult<T>> => {
+          return client.query<T>(sql, params as never[]);
+        },
+      };
+
       const txEnv = new Environment({
-        pool: { query: client.query.bind(client) } as { query: PoolClient['query'] },
+        pool: txQueryable,
         registry: this.registry,
         user: this.user,
         context: this.context,
@@ -125,7 +159,7 @@ export function envMiddleware(
   return (req: Request, res: Response, next: NextFunction): void => {
     const envReq = req as EnvRequest;
     const env = new Environment({
-      pool,
+      pool: new PoolQueryable(pool),
       registry,
       user: envReq.user || null,
       context: {
