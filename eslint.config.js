@@ -41,7 +41,6 @@ export default [
     ignores: [
       'node_modules/**',
       'dist/**',
-      'core/client/dist/**',
       'coverage/**',
       'uploads/**',
       '*.config.js',

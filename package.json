@@ -6,10 +6,11 @@
   "main": "server.ts",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/server/server.js",
     "dev": "tsx watch server.ts",
-    "build": "tsc -b",
+    "server:build": "tsc -b",
     "client:build": "pnpm --filter my-erp-client build",
+    "build": "pnpm server:build && pnpm client:build",
     "client:dev": "pnpm --filter my-erp-client dev",
     "db:create": "createdb my_erp",
     "db:drop": "dropdb my_erp",

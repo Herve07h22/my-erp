@@ -118,7 +118,7 @@ async function bootstrap(): Promise<void> {
   app.use(createUploadRouter());
 
   // Servir les fichiers statiques du client
-  app.use(express.static(path.join(__dirname, 'core/client/dist')));
+  app.use(express.static(path.join(__dirname, 'dist/client')));
   
   // Servir les fichiers uploadés
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -126,7 +126,7 @@ async function bootstrap(): Promise<void> {
   // Route pour le client SPA
   app.get('/', (_req: Request, res: Response) => {
     // Vérifier si le bundle existe
-    const bundlePath = path.join(__dirname, 'core/client/dist/bundle.js');
+    const bundlePath = path.join(__dirname, 'dist/client/bundle.js');
 
     if (fs.existsSync(bundlePath)) {
       // Client React compilé
