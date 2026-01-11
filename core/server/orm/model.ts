@@ -378,7 +378,14 @@ export class BaseModel {
             data[fieldName] = null;
           }
         } else {
-          data[fieldName] = record[fieldName];
+          // Appliquer la conversion de type fromSQL si disponible
+          const rawValue = record[fieldName];
+          const fieldType = fieldDef ? fieldTypes[fieldDef.type] : undefined;
+          if (fieldType?.fromSQL && rawValue !== null && rawValue !== undefined) {
+            data[fieldName] = fieldType.fromSQL(rawValue);
+          } else {
+            data[fieldName] = rawValue;
+          }
         }
       }
 

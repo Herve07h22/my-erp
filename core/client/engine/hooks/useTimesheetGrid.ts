@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ErpDate } from '../../../shared/erp-date/index.js';
+import { ErpHours } from '../../../shared/erp-hours/index.js';
 
 const API_BASE = '/api';
 
@@ -184,9 +185,11 @@ export function useTimesheetGrid(
           if (!row.cells[dateKey]) {
             row.cells[dateKey] = { hours: 0, entryId: null };
           }
-          row.cells[dateKey].hours += ts.unit_amount;
+          // Utiliser ErpHours pour garantir des calculs numériques corrects
+          const amount = ErpHours.from(ts.unit_amount);
+          row.cells[dateKey].hours = ErpHours.from(row.cells[dateKey].hours).add(amount).toNumber();
           row.cells[dateKey].entryId = ts.id;
-          row.totalHours += ts.unit_amount;
+          row.totalHours = ErpHours.from(row.totalHours).add(amount).toNumber();
         }
       }
 
@@ -200,7 +203,7 @@ export function useTimesheetGrid(
   // Calculer les totaux
   const { dayTotals, weekTotal } = useMemo(() => {
     const totals: Record<string, number> = {};
-    let total = 0;
+    let total = ErpHours.zero();
 
     for (const day of weekDays) {
       totals[day.toISOString()] = 0;
@@ -208,12 +211,13 @@ export function useTimesheetGrid(
 
     for (const row of rows) {
       for (const [date, cell] of Object.entries(row.cells)) {
-        totals[date] = (totals[date] || 0) + cell.hours;
-        total += cell.hours;
+        const cellHours = ErpHours.from(cell.hours);
+        totals[date] = ErpHours.from(totals[date] || 0).add(cellHours).toNumber();
+        total = total.add(cellHours);
       }
     }
 
-    return { dayTotals: totals, weekTotal: total };
+    return { dayTotals: totals, weekTotal: total.toNumber() };
   }, [rows, weekDays]);
 
   // Mettre à jour une cellule

@@ -3,6 +3,7 @@ import { WeekNavigator } from '../components/WeekNavigator.js';
 import { ViewSwitcher, ViewMode } from '../components/ViewSwitcher.js';
 import { useTimesheetGrid, GridRow } from '../hooks/useTimesheetGrid.js';
 import { ErpDate } from '../../../shared/erp-date/index.js';
+import { ErpHours } from '../../../shared/erp-hours/index.js';
 
 interface ViewDefinition {
   id: string;
@@ -25,34 +26,6 @@ interface TimesheetGridViewProps {
 }
 
 /**
- * Formate un nombre d'heures en HH:MM
- */
-function formatHours(hours: number): string {
-  if (hours === 0) return '0:00';
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
-  return `${h}:${m.toString().padStart(2, '0')}`;
-}
-
-/**
- * Parse une chaîne HH:MM en nombre d'heures
- */
-function parseHours(str: string): number {
-  const trimmed = str.trim();
-  if (!trimmed || trimmed === '0:00') return 0;
-
-  // Format H:MM ou HH:MM
-  if (trimmed.includes(':')) {
-    const [h, m] = trimmed.split(':').map(Number);
-    return (h || 0) + (m || 0) / 60;
-  }
-
-  // Nombre simple (heures décimales)
-  const num = parseFloat(trimmed);
-  return isNaN(num) ? 0 : num;
-}
-
-/**
  * Composant de cellule éditable pour les heures
  */
 function TimeCell({
@@ -65,17 +38,17 @@ function TimeCell({
   isToday: boolean;
 }): React.ReactElement {
   const [editing, setEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(formatHours(value));
+  const [inputValue, setInputValue] = useState(ErpHours.from(value).format());
 
   useEffect(() => {
     if (!editing) {
-      setInputValue(formatHours(value));
+      setInputValue(ErpHours.from(value).format());
     }
   }, [value, editing]);
 
   const handleBlur = (): void => {
     setEditing(false);
-    const newHours = parseHours(inputValue);
+    const newHours = ErpHours.parse(inputValue).toNumber();
     if (newHours !== value) {
       onChange(newHours);
     }
@@ -85,7 +58,7 @@ function TimeCell({
     if (e.key === 'Enter') {
       (e.target as HTMLInputElement).blur();
     } else if (e.key === 'Escape') {
-      setInputValue(formatHours(value));
+      setInputValue(ErpHours.from(value).format());
       setEditing(false);
     }
   };
@@ -108,7 +81,7 @@ function TimeCell({
           className={`time-display ${value > 0 ? 'has-value' : ''}`}
           onClick={() => setEditing(true)}
         >
-          {formatHours(value)}
+          {ErpHours.from(value).format()}
         </button>
       )}
     </td>
@@ -217,7 +190,7 @@ export function TimesheetGridView({
                         className={`variance ${row.variance > 0 ? 'positive' : 'negative'}`}
                       >
                         {row.variance > 0 ? '+' : ''}
-                        {formatHours(row.variance)}
+                        {ErpHours.from(row.variance).format()}
                       </span>
                     )}
                   </td>
@@ -235,7 +208,7 @@ export function TimesheetGridView({
                       />
                     );
                   })}
-                  <td className="col-total row-total">{formatHours(row.totalHours)}</td>
+                  <td className="col-total row-total">{ErpHours.from(row.totalHours).format()}</td>
                 </tr>
               ))
             )}
@@ -255,11 +228,11 @@ export function TimesheetGridView({
                     key={dateKey}
                     className={`col-day day-total ${isToday ? 'today' : ''}`}
                   >
-                    {formatHours(total)}
+                    {ErpHours.from(total).format()}
                   </td>
                 );
               })}
-              <td className="col-total week-total">{formatHours(weekTotal)}</td>
+              <td className="col-total week-total">{ErpHours.from(weekTotal).format()}</td>
             </tr>
           </tfoot>
         </table>
@@ -274,7 +247,7 @@ export function TimesheetGridView({
             />
           </div>
           <span className="progress-label">
-            {formatHours(weekTotal)} / {formatHours(targetHours)}
+            {ErpHours.from(weekTotal).format()} / {ErpHours.from(targetHours).format()}
           </span>
         </div>
       </footer>
