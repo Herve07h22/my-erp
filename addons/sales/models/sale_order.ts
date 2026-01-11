@@ -71,7 +71,7 @@ class SaleOrder extends BaseModel {
    */
   override async create(values: Record<string, unknown>): Promise<SaleOrder> {
     if (!values.name) {
-      const Sequence = this.env.model('ir.sequence') as IrSequence;
+      const Sequence = this.env.model<IrSequence>('ir.sequence');
       values.name = await Sequence.nextByCode(
         (this.constructor as typeof SaleOrder)._sequence
       );

@@ -195,7 +195,7 @@ export interface EnvironmentInterface {
   lang: string;
   timezone: string;
 
-  model(modelName: string): ModelInstance;
+  model<T = ModelInstance>(modelName: string): ModelType<T>;
   call(modelName: string): ModelInstance;
   withContext(newContext: Record<string, unknown>): EnvironmentInterface;
   withUser(user: RecordData): EnvironmentInterface;

@@ -87,6 +87,7 @@ Le modèle définit la structure des données et les méthodes métier.
 ```typescript
 import { BaseModel } from '../../../core/server/orm/index.js';
 import type { FieldsCollection } from '../../../core/server/orm/types.js';
+import type IrSequence from '../../base/models/ir_sequence.js';
 
 /**
  * Modèle Bien Immobilier
@@ -97,18 +98,21 @@ class Property extends BaseModel {
   static override _table = 'real_estate_property';
   static override _order = 'create_date DESC';
 
+  /** Code de la séquence utilisée pour générer les références automatiques */
+  static _sequence = 'real_estate.property';
+
   static override _fields: FieldsCollection = {
     id: { type: 'integer', primaryKey: true },
-    
+
     // Informations de base
-    name: { 
-      type: 'string', 
-      required: true, 
+    name: {
+      type: 'string',
+      required: true,
       label: 'Titre de l\'annonce',
       size: 255
     },
-    reference: { 
-      type: 'string', 
+    reference: {
+      type: 'string',
       label: 'Référence',
       size: 64
     },
@@ -240,17 +244,17 @@ class Property extends BaseModel {
   };
 
   /**
-   * Génère automatiquement une référence unique
+   * Crée un bien avec génération automatique de la référence via ir.sequence
    */
-  async create(values: Record<string, unknown>): Promise<unknown> {
+  override async create(values: Record<string, unknown>): Promise<Property> {
     if (!values.reference) {
-      // Générer une référence : PROP-YYYYMMDD-XXX
-      const now = new Date();
-      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      values.reference = `PROP-${dateStr}-${random}`;
+      // Utilise le système de séquences pour générer une référence unique
+      const Sequence = this.env.model<IrSequence>('ir.sequence');
+      values.reference = await Sequence.nextByCode(
+        (this.constructor as typeof Property)._sequence
+      );
     }
-    return super.create(values);
+    return (await super.create(values)) as Property;
   }
 
   /**
@@ -371,7 +375,124 @@ module.exports = { up, down };
 
 **Note :** Les migrations sont exécutées automatiquement au démarrage du serveur si la table n'existe pas.
 
-## Étape 5 : Créer les vues
+## Étape 5 : Configurer la séquence pour les références automatiques
+
+Le système `ir.sequence` permet de générer automatiquement des références uniques pour les enregistrements (comme `PROP2026-00001` pour un bien immobilier). Cette fonctionnalité est fournie par le module `base`.
+
+### Comment fonctionne une séquence ?
+
+Une séquence est composée de :
+- **code** : Identifiant technique unique (ex: `real_estate.property`)
+- **prefix** : Préfixe ajouté avant le numéro (ex: `PROP%(year)` → `PROP2026`)
+- **suffix** : Suffixe ajouté après le numéro (optionnel)
+- **padding** : Nombre de chiffres pour le numéro (ex: 5 → `00001`)
+- **number_next** : Prochain numéro à utiliser
+- **number_increment** : Pas d'incrémentation (généralement 1)
+- **use_date_range** : Active l'interpolation des dates dans prefix/suffix
+
+### Variables de date disponibles
+
+Dans le préfixe et le suffixe, vous pouvez utiliser ces variables :
+- `%(year)` ou `%y` : Année complète (ex: 2026)
+- `%(month)` ou `%m` : Mois sur 2 chiffres (ex: 01)
+- `%(day)` ou `%d` : Jour sur 2 chiffres (ex: 15)
+
+Exemples de format :
+- `PROP%(year)-` + padding 5 → `PROP2026-00001`
+- `RE%(year)%(month)-` + padding 4 → `RE202601-0001`
+- `` (vide) + padding 6 + suffix `-%(year)` → `000001-2026`
+
+### Créer les données initiales de séquence
+
+Créez le fichier `data/init.json` qui sera chargé au démarrage du module :
+
+**`addons/real_estate/data/init.json`** :
+
+```json
+{
+  "ir.sequence": [
+    {
+      "id": 100,
+      "name": "Biens immobiliers",
+      "code": "real_estate.property",
+      "prefix": "PROP%(year)-",
+      "padding": 5,
+      "number_next": 1,
+      "number_increment": 1,
+      "use_date_range": true,
+      "active": true
+    }
+  ]
+}
+```
+
+**Explication :**
+- `id: 100` : Un ID unique (utilisez des valeurs élevées pour éviter les conflits)
+- `code: "real_estate.property"` : Doit correspondre à `static _sequence` dans le modèle
+- `prefix: "PROP%(year)-"` : Génère `PROP2026-` pour l'année 2026
+- `padding: 5` : Numéros sur 5 chiffres → `00001`, `00002`, etc.
+
+Avec cette configuration, les références générées seront : `PROP2026-00001`, `PROP2026-00002`, etc.
+
+### Mise à jour du manifest.json
+
+N'oubliez pas d'ajouter le fichier init.json au manifest :
+
+```json
+{
+  "name": "real_estate",
+  "version": "1.0.0",
+  "label": "Immobilier",
+  "category": "Sales",
+  "description": "Gestion des annonces immobilières",
+  "depends": ["base"],
+  "autoInstall": false,
+  "models": ["models/*.js"],
+  "views": ["views/*.json"],
+  "data": ["data/init.json"],
+  "security": ["security/access.json"],
+  "migrations": ["migrations/*.js"],
+  "author": "Votre nom",
+  "license": "LGPL-3"
+}
+```
+
+### Utilisation dans le modèle
+
+La séquence est utilisée automatiquement lors de la création d'un enregistrement grâce au code suivant dans `property.ts` :
+
+```typescript
+/** Code de la séquence utilisée pour générer les références automatiques */
+static _sequence = 'real_estate.property';
+
+override async create(values: Record<string, unknown>): Promise<Property> {
+  if (!values.reference) {
+    // Utilise le système de séquences pour générer une référence unique
+    const Sequence = this.env.model<IrSequence>('ir.sequence');
+    values.reference = await Sequence.nextByCode(
+      (this.constructor as typeof Property)._sequence
+    );
+  }
+  return (await super.create(values)) as Property;
+}
+```
+
+**Points importants :**
+- `_sequence` est une convention : c'est le code de la séquence à utiliser
+- `nextByCode()` est atomique : pas de risque de doublon même avec des créations simultanées
+- La référence n'est générée que si elle n'est pas déjà fournie
+
+### Méthode `previewByCode` (optionnel)
+
+Pour afficher un aperçu de la prochaine référence sans l'incrémenter (utile dans un formulaire) :
+
+```typescript
+const Sequence = this.env.model<IrSequence>('ir.sequence');
+const preview = await Sequence.previewByCode('real_estate.property');
+// Retourne "PROP2026-00042" sans incrémenter le compteur
+```
+
+## Étape 6 : Créer les vues
 
 Les vues définissent comment afficher et éditer les données.
 
@@ -491,7 +612,7 @@ Les vues définissent comment afficher et éditer les données.
 - **Actions** : Définissent les vues accessibles depuis les menus
 - **Menus** : Créent la navigation dans l'interface
 
-## Étape 6 : Créer le fichier de sécurité
+## Étape 7 : Créer le fichier de sécurité
 
 Même si basique, il est requis.
 
@@ -512,7 +633,7 @@ Même si basique, il est requis.
 }
 ```
 
-## Étape 7 : Gérer les images avec upload
+## Étape 8 : Gérer les images avec upload
 
 Le système supporte maintenant l'upload de fichiers ! Vous pouvez utiliser le type de champ `image` pour une image unique, ou un champ `json` pour plusieurs images.
 
@@ -611,7 +732,7 @@ ALTER TABLE real_estate_property
 
 Le système fonctionne avec les deux types (`string` et `image`), mais `image` est recommandé pour une meilleure sémantique.
 
-## Étape 8 : Activer l'addon
+## Étape 9 : Activer l'addon
 
 1. **Ajouter le module à la configuration** :
 
@@ -654,7 +775,7 @@ Le serveur va :
 - Vous devriez voir un nouveau menu "Immobilier" dans la barre latérale
 - Cliquez dessus pour accéder aux annonces
 
-## Étape 9 : Ajouter les tests automatiques
+## Étape 10 : Ajouter les tests automatiques
 
 Chaque addon devrait avoir des tests pour valider ses vues. Le framework fournit un helper réutilisable.
 
@@ -702,7 +823,7 @@ addons/real_estate/
 │   └── actions.test.ts    # Tests des actions métier (optionnel)
 ```
 
-## Étape 10 : Tester manuellement l'addon
+## Étape 11 : Tester manuellement l'addon
 
 1. **Créer une annonce** :
    - Cliquez sur "Toutes les annonces"
@@ -765,6 +886,7 @@ Vous avez appris à :
 - ✅ Créer la structure d'un addon
 - ✅ Définir un modèle avec différents types de champs
 - ✅ Créer une migration de base de données
+- ✅ Configurer une séquence pour générer des références automatiques (ex: `PROP2026-00001`)
 - ✅ Définir des vues (formulaire et liste)
 - ✅ Créer des actions et menus
 - ✅ Ajouter des méthodes métier au modèle
