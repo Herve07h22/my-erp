@@ -1,4 +1,5 @@
 import { BaseModel } from '../../../core/server/orm/index.js';
+import { hasCountProperty } from '../../../core/server/orm/guards.js';
 import type { FieldsCollection } from '../../../core/server/orm/types.js';
 
 /**
@@ -71,7 +72,13 @@ class SaleOrder extends BaseModel {
       `SELECT COUNT(*) as count FROM sale_order WHERE name LIKE $1`,
       [`SO${year}%`]
     );
-    const count = parseInt(result.rows[0].count as string, 10) + 1;
+    const firstRow = result.rows[0];
+
+    if (!hasCountProperty(firstRow)) {
+      return `SO${year}00001`;
+    }
+
+    const count = parseInt(String(firstRow.count), 10) + 1;
     return `SO${year}${String(count).padStart(5, '0')}`;
   }
 

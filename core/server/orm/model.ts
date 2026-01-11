@@ -1,4 +1,5 @@
 import { fieldTypes, generateCreateTable } from './fields.js';
+import { hasCountProperty } from './guards.js';
 import type {
   Domain,
   DomainCondition,
@@ -285,7 +286,13 @@ export class BaseModel {
     }
 
     const result = await pool.query(sql, params);
-    return parseInt(result.rows[0].count as string, 10);
+    const firstRow = result.rows[0];
+
+    if (!hasCountProperty(firstRow)) {
+      return 0;
+    }
+
+    return parseInt(String(firstRow.count), 10);
   }
 
   /**

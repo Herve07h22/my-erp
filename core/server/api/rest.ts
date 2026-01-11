@@ -2,6 +2,7 @@ import express, { Router, Request, Response, NextFunction, Express } from 'expre
 import type { ModelRegistryInterface, Domain } from '../orm/types.js';
 import type { EnvRequest } from '../services/env.js';
 import { getQueryString, getQueryInt, getQueryJSON } from '../../shared/utils/query-params.js';
+import { validateRequestBody, isAsyncMethod } from '../orm/guards.js';
 
 /**
  * Type guard pour vérifier si une requête est une EnvRequest
@@ -103,7 +104,8 @@ export function generateModelAPI(
     try {
       const envReq = getEnvRequest(req);
       const Model = envReq.env(modelName);
-      const records = await Model.create(req.body as Record<string, unknown>);
+      const values = validateRequestBody(req.body);
+      const records = await Model.create(values);
       const data = await records.read();
 
       res.status(201).json({
@@ -131,7 +133,8 @@ export function generateModelAPI(
           });
         }
 
-        await records.write(req.body as Record<string, unknown>);
+        const values = validateRequestBody(req.body);
+        await records.write(values);
         const data = await records.read();
 
         res.json({ success: true, data: data[0] });
@@ -184,16 +187,17 @@ export function generateModelAPI(
         const actionName = req.params.action;
 
         // Vérifier que l'action existe sur le recordset
-        if (!(actionName in records) || typeof records[actionName as keyof typeof records] !== 'function') {
+        if (!isAsyncMethod(records, actionName)) {
           return res.status(404).json({
             success: false,
-            error: `Action "${actionName}" not found`,
+            error: `Action "${actionName}" not found or not a method`,
           });
         }
 
-        // Appeler l'action de manière type-safe via la réflexion
-        const action = records[actionName as keyof typeof records] as (params: unknown) => Promise<unknown>;
-        const result = await action.call(records, req.body);
+        // Appeler l'action de manière type-safe
+        const action = (records as unknown as Record<string, (params: unknown) => Promise<unknown>>)[actionName];
+        const params = validateRequestBody(req.body);
+        const result = await action.call(records, params);
         res.json({ success: true, data: result });
       } catch (err) {
         next(err);
