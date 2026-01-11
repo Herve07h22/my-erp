@@ -20,10 +20,11 @@ export function ImageField({
   value,
   onChange,
   disabled = false,
-  required = false,
+  required: _required = false,
   hasError = false,
   multiple = false,
 }: ImageFieldProps): React.ReactElement {
+  void _required; // Sera utilisé pour la validation future
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

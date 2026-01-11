@@ -8,6 +8,7 @@ import type {
   FieldTypeDefinition,
   ModelDef,
 } from './types.js';
+import { ErpDate, ErpDateTime } from '@core/shared/erp-date/index.js';
 
 export const fieldTypes: FieldTypesCollection = {
   integer: {
@@ -56,31 +57,35 @@ export const fieldTypes: FieldTypesCollection = {
 
   date: {
     sqlType: 'DATE',
-    jsType: 'object',
+    jsType: 'ErpDate',
     validate: (value: unknown): boolean =>
-      value instanceof Date || typeof value === 'string',
-    toSQL: (value: unknown): string | unknown =>
-      value instanceof Date ? value.toISOString().split('T')[0] : value,
-    fromSQL: (value: unknown): Date | null => {
+      value instanceof ErpDate || value instanceof Date || typeof value === 'string',
+    toSQL: (value: unknown): string | null => {
       if (!value) return null;
-      if (value instanceof Date) return value;
-      if (typeof value === 'string') return new Date(value);
+      if (value instanceof ErpDate) return value.toISOString();
+      if (value instanceof Date) return ErpDate.fromDate(value).toISOString();
+      if (typeof value === 'string') return value;
       return null;
+    },
+    fromSQL: (value: unknown): ErpDate | null => {
+      return ErpDate.parse(value);
     },
   },
 
   datetime: {
     sqlType: 'TIMESTAMP',
-    jsType: 'object',
+    jsType: 'ErpDateTime',
     validate: (value: unknown): boolean =>
-      value instanceof Date || typeof value === 'string',
-    toSQL: (value: unknown): string | unknown =>
-      value instanceof Date ? value.toISOString() : value,
-    fromSQL: (value: unknown): Date | null => {
+      value instanceof ErpDateTime || value instanceof Date || typeof value === 'string',
+    toSQL: (value: unknown): string | null => {
       if (!value) return null;
-      if (value instanceof Date) return value;
-      if (typeof value === 'string') return new Date(value);
+      if (value instanceof ErpDateTime) return value.toISOString();
+      if (value instanceof Date) return ErpDateTime.fromDate(value).toISOString();
+      if (typeof value === 'string') return value;
       return null;
+    },
+    fromSQL: (value: unknown): ErpDateTime | null => {
+      return ErpDateTime.parse(value);
     },
   },
 

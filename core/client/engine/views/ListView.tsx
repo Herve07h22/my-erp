@@ -2,6 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useModel } from '../hooks/useModel';
 import type { RecordData, FieldDefinition } from '../hooks/useModel';
 import { ViewSwitcher, ViewMode } from '../components/ViewSwitcher';
+import { ErpDate, ErpDateTime } from '../../../shared/erp-date/index.js';
 
 interface ViewArch {
   fields?: string[];
@@ -86,9 +87,9 @@ export function ListView({
       case 'boolean':
         return value ? 'Oui' : 'Non';
       case 'date':
-        return new Date(value as string).toLocaleDateString('fr-FR');
+        return ErpDate.parse(value)?.formatLocale() ?? '-';
       case 'datetime':
-        return new Date(value as string).toLocaleString('fr-FR');
+        return ErpDateTime.parse(value)?.formatDateTime() ?? '-';
       case 'monetary':
       case 'float':
         return typeof value === 'number' ? value.toFixed(2) : String(value);

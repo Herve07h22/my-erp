@@ -2,12 +2,13 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { WeekNavigator, formatDayName, formatDateISO, isSameDay } from '../components/WeekNavigator.js';
 import { ViewSwitcher, ViewMode } from '../components/ViewSwitcher.js';
 import { useTimesheetGrid, GridRow } from '../hooks/useTimesheetGrid.js';
+import { ErpDate } from '../../../shared/erp-date/index.js';
 
 interface ViewDefinition {
   id: string;
   model: string;
   type: string;
-  arch: unknown;
+  arch?: unknown;
 }
 
 interface NavigateParams {
@@ -120,11 +121,12 @@ function TimeCell({
  */
 export function TimesheetGridView({
   model,
-  viewDef,
+  viewDef: _viewDef,
   onNavigate,
   onViewChange,
 }: TimesheetGridViewProps): React.ReactElement {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  void _viewDef; // Sera utilisé pour la configuration future
+  const [currentDate, setCurrentDate] = useState(ErpDate.today());
 
   const {
     rows,
@@ -137,7 +139,7 @@ export function TimesheetGridView({
     updateCell,
   } = useTimesheetGrid(currentDate);
 
-  const today = new Date();
+  const today = ErpDate.today();
 
   const handleCellChange = useCallback(
     async (row: GridRow, date: string, hours: number): Promise<void> => {
@@ -182,7 +184,7 @@ export function TimesheetGridView({
                   >
                     <div className="day-name">{formatDayName(day)}</div>
                     <div className="day-date">
-                      {day.getDate()} {day.toLocaleDateString('fr-FR', { month: 'short' })}
+                      {day.day} {day.formatShort().split(' ')[1]}
                     </div>
                   </th>
                 );

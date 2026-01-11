@@ -1,19 +1,32 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getWeekStart, getWeekDays, formatDateISO } from '../components/WeekNavigator.js';
+import { ErpDate } from '../../../shared/erp-date/index.js';
 
 const API_BASE = '/api';
+
+/**
+ * Normalise une date en format YYYY-MM-DD
+ */
+function normalizeDateKey(date: string | ErpDate): string {
+  if (date instanceof ErpDate) {
+    return date.toISOString();
+  }
+  const parsed = ErpDate.parse(date);
+  return parsed?.toISOString() ?? '';
+}
 
 interface TaskData {
   id: number;
   name: string;
   project_id: { id: number; name: string } | null;
+  user_id: { id: number; name: string } | number | null;
   planned_hours: number;
   effective_hours: number;
 }
 
 interface TimesheetEntry {
   id: number;
-  date: string;
+  date: string | ErpDate;
   task_id: number | { id: number };
   unit_amount: number;
 }
@@ -40,8 +53,8 @@ export interface TimesheetGridData {
 interface UseTimesheetGridReturn extends TimesheetGridData {
   loading: boolean;
   error: string | null;
-  weekStart: Date;
-  weekDays: Date[];
+  weekStart: ErpDate;
+  weekDays: ErpDate[];
   updateCell: (taskId: number, date: string, hours: number) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -51,7 +64,7 @@ interface UseTimesheetGridReturn extends TimesheetGridData {
  * Les lignes sont basées sur les tâches non terminées
  */
 export function useTimesheetGrid(
-  currentDate: Date,
+  currentDate: ErpDate,
   userId: number = 1, // TODO: Get from auth context when implemented
   targetHours: number = 40
 ): UseTimesheetGridReturn {
@@ -60,8 +73,8 @@ export function useTimesheetGrid(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const weekStart = useMemo(() => getWeekStart(currentDate), [currentDate.getTime()]);
-  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
+  const weekStart = useMemo(() => getWeekStart(currentDate), [currentDate.toISOString()]);
+  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart.toISOString()]);
   const weekKey = formatDateISO(weekStart);
 
   // Charger les tâches non terminées
@@ -128,11 +141,29 @@ export function useTimesheetGrid(
   }, [loadTimesheets]);
 
   // Construire les lignes à partir des tâches et timesheets
+  // Filtre: tâches assignées à l'utilisateur OU avec des timesheets cette semaine
   const rows = useMemo((): GridRow[] => {
     const result: GridRow[] = [];
 
+    // Collecter les task_ids des timesheets de cette semaine
+    const taskIdsWithTimesheets = new Set<number>();
+    for (const ts of timesheets) {
+      const tsTaskId = typeof ts.task_id === 'object' ? ts.task_id.id : ts.task_id;
+      if (tsTaskId) taskIdsWithTimesheets.add(tsTaskId);
+    }
+
     for (const task of tasks) {
       if (!task.project_id) continue;
+
+      // Vérifier si la tâche est assignée à l'utilisateur
+      const taskUserId = typeof task.user_id === 'object' ? task.user_id?.id : task.user_id;
+      const isAssignedToUser = taskUserId === userId;
+
+      // Vérifier si l'utilisateur a des timesheets sur cette tâche
+      const hasTimesheets = taskIdsWithTimesheets.has(task.id);
+
+      // Garder uniquement les tâches assignées OU avec des timesheets
+      if (!isAssignedToUser && !hasTimesheets) continue;
 
       const row: GridRow = {
         key: `task-${task.id}`,
@@ -150,11 +181,12 @@ export function useTimesheetGrid(
       for (const ts of timesheets) {
         const tsTaskId = typeof ts.task_id === 'object' ? ts.task_id.id : ts.task_id;
         if (tsTaskId === task.id) {
-          if (!row.cells[ts.date]) {
-            row.cells[ts.date] = { hours: 0, entryId: null };
+          const dateKey = normalizeDateKey(ts.date);
+          if (!row.cells[dateKey]) {
+            row.cells[dateKey] = { hours: 0, entryId: null };
           }
-          row.cells[ts.date].hours += ts.unit_amount;
-          row.cells[ts.date].entryId = ts.id;
+          row.cells[dateKey].hours += ts.unit_amount;
+          row.cells[dateKey].entryId = ts.id;
           row.totalHours += ts.unit_amount;
         }
       }
@@ -164,7 +196,7 @@ export function useTimesheetGrid(
     }
 
     return result;
-  }, [tasks, timesheets]);
+  }, [tasks, timesheets, userId]);
 
   // Calculer les totaux
   const { dayTotals, weekTotal } = useMemo(() => {

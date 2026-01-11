@@ -2,6 +2,7 @@ import React, { ChangeEvent } from 'react';
 import type { FieldDefinition } from '../hooks/useModel';
 import { Many2OneField } from './Many2OneField';
 import { ImageField } from './ImageField';
+import { ErpDate, ErpDateTime } from '../../../shared/erp-date/index.js';
 
 interface FieldRendererProps {
   name: string;
@@ -73,7 +74,7 @@ export function FieldRenderer({
         return (
           <input
             type="number"
-            value={value ?? ''}
+            value={(value as number | string) ?? ''}
             onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
             step={1}
             {...commonProps}
@@ -85,7 +86,7 @@ export function FieldRenderer({
         return (
           <input
             type="number"
-            value={value ?? ''}
+            value={(value as number | string) ?? ''}
             onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
             step={0.01}
             {...commonProps}
@@ -102,29 +103,33 @@ export function FieldRenderer({
           />
         );
 
-      case 'date':
+      case 'date': {
+        const dateValue = ErpDate.parse(value);
         return (
           <input
             type="date"
-            value={
-              value ? new Date(value as string).toISOString().split('T')[0] : ''
-            }
+            value={dateValue?.toISOString() ?? ''}
             onChange={handleChange}
             {...commonProps}
           />
         );
+      }
 
-      case 'datetime':
+      case 'datetime': {
+        // Format pour datetime-local: YYYY-MM-DDTHH:mm
+        const dtValue = ErpDateTime.parse(value);
+        const dtInputValue = dtValue
+          ? `${dtValue.toErpDate().toISOString()}T${String(dtValue.hours).padStart(2, '0')}:${String(dtValue.minutes).padStart(2, '0')}`
+          : '';
         return (
           <input
             type="datetime-local"
-            value={
-              value ? new Date(value as string).toISOString().slice(0, 16) : ''
-            }
+            value={dtInputValue}
             onChange={handleChange}
             {...commonProps}
           />
         );
+      }
 
       case 'selection':
         return (
