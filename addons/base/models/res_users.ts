@@ -69,8 +69,23 @@ class ResUsers extends BaseModel {
     login: string,
     password: string
   ): Promise<RecordData | null> {
-    const ResUsers = env.model<ResUsers>('res.users');
-    return await ResUsers.authenticate(login, password);
+    const UsersModel = env.model('res.users');
+    const users = await UsersModel.search([
+      ['login', '=', login],
+      ['active', '=', true],
+    ]);
+
+    if (!users.length) {
+      return null;
+    }
+
+    const user = users.first;
+    // TODO: Implémenter le hash du mot de passe
+    if (user && user.password === password) {
+      return user;
+    }
+
+    return null;
   }
 
   /**

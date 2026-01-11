@@ -84,7 +84,7 @@ const GridArchSchema = z.object({
 });
 
 // Architecture générique (union des différents types)
-const ArchSchema = z.union([FormArchSchema, ListArchSchema, GridArchSchema, z.record(z.unknown())]);
+const ArchSchema = z.union([FormArchSchema, ListArchSchema, GridArchSchema, z.record(z.string(), z.unknown())]);
 
 // Vue
 const ViewSchema = z.object({
@@ -116,7 +116,7 @@ const ActionSchema = z.object({
   model: z.string().optional(),
   views: z.array(ViewRefSchema).optional(),
   domain: DomainSchema.optional(),
-  context: z.record(z.unknown()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
   target: z.enum(['current', 'new', 'inline', 'fullscreen']).optional(),
   res_id: z.number().optional(),
 });
