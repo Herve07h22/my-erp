@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { WeekNavigator, formatDayName, formatDateISO, isSameDay } from '../components/WeekNavigator.js';
+import { WeekNavigator } from '../components/WeekNavigator.js';
 import { ViewSwitcher, ViewMode } from '../components/ViewSwitcher.js';
 import { useTimesheetGrid, GridRow } from '../hooks/useTimesheetGrid.js';
 import { ErpDate } from '../../../shared/erp-date/index.js';
@@ -176,13 +176,13 @@ export function TimesheetGridView({
               <th className="col-index"></th>
               <th className="col-project">Projet / Tâche</th>
               {weekDays.map((day) => {
-                const isToday = isSameDay(day, today);
+                const isToday = day.isSameDay(today);
                 return (
                   <th
-                    key={formatDateISO(day)}
+                    key={day.toISOString()}
                     className={`col-day ${isToday ? 'today' : ''}`}
                   >
-                    <div className="day-name">{formatDayName(day)}</div>
+                    <div className="day-name">{day.formatDayName()}</div>
                     <div className="day-date">
                       {day.day} {day.formatShort().split(' ')[1]}
                     </div>
@@ -222,9 +222,9 @@ export function TimesheetGridView({
                     )}
                   </td>
                   {weekDays.map((day) => {
-                    const dateKey = formatDateISO(day);
+                    const dateKey = day.toISOString();
                     const cellValue = row.cells[dateKey]?.hours || 0;
-                    const isToday = isSameDay(day, today);
+                    const isToday = day.isSameDay(today);
 
                     return (
                       <TimeCell
@@ -246,9 +246,9 @@ export function TimesheetGridView({
               <td></td>
               <td></td>
               {weekDays.map((day) => {
-                const dateKey = formatDateISO(day);
+                const dateKey = day.toISOString();
                 const total = dayTotals[dateKey] || 0;
-                const isToday = isSameDay(day, today);
+                const isToday = day.isSameDay(today);
 
                 return (
                   <td

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getWeekStart, getWeekDays, formatDateISO } from '../components/WeekNavigator.js';
 import { ErpDate } from '../../../shared/erp-date/index.js';
 
 const API_BASE = '/api';
@@ -73,9 +72,9 @@ export function useTimesheetGrid(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const weekStart = useMemo(() => getWeekStart(currentDate), [currentDate.toISOString()]);
-  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart.toISOString()]);
-  const weekKey = formatDateISO(weekStart);
+  const weekStart = useMemo(() => currentDate.getWeekStart(), [currentDate.toISOString()]);
+  const weekDays = useMemo(() => weekStart.getWeekDays(), [weekStart.toISOString()]);
+  const weekKey = weekStart.toISOString();
 
   // Charger les tâches non terminées
   const loadTasks = useCallback(async (): Promise<void> => {
@@ -99,8 +98,8 @@ export function useTimesheetGrid(
     setError(null);
 
     try {
-      const startDate = formatDateISO(weekStart);
-      const endDate = formatDateISO(weekDays[6]);
+      const startDate = weekStart.toISOString();
+      const endDate = weekDays[6].toISOString();
 
       const domain: unknown[] = [
         ['date', '>=', startDate],
@@ -204,7 +203,7 @@ export function useTimesheetGrid(
     let total = 0;
 
     for (const day of weekDays) {
-      totals[formatDateISO(day)] = 0;
+      totals[day.toISOString()] = 0;
     }
 
     for (const row of rows) {
