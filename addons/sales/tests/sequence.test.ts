@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestEnv } from '../../../core/test-helpers/test-env.js';
-import type SaleOrder from '../models/sale_order.js';
-import type ResPartner from '../../base/models/res_partner.js';
+import type SaleOrderModel from '../models/sale_order.js';
+import type ResPartnerModel from '../../base/models/res_partner.js';
 
 describe('sale.order - Intégration avec ir.sequence', () => {
   let env: Awaited<ReturnType<typeof createTestEnv>>['env'];
@@ -31,8 +31,8 @@ describe('sale.order - Intégration avec ir.sequence', () => {
 
   describe('Génération automatique de référence', () => {
     it('should auto-generate name using ir.sequence', async () => {
-      const Partner = env.model<typeof ResPartner>('res.partner');
-      const SaleOrder = env.model<typeof SaleOrder>('sale.order');
+      const Partner = env.model<typeof ResPartnerModel>('res.partner');
+      const SaleOrder = env.model<typeof SaleOrderModel>('sale.order');
 
       const partner = await Partner.create({ name: 'Test Customer' });
       const currentYear = new Date().getFullYear();
@@ -45,8 +45,8 @@ describe('sale.order - Intégration avec ir.sequence', () => {
     });
 
     it('should generate sequential names for multiple orders', async () => {
-      const Partner = env.model<typeof ResPartner>('res.partner');
-      const SaleOrder = env.model<typeof SaleOrder>('sale.order');
+      const Partner = env.model<typeof ResPartnerModel>('res.partner');
+      const SaleOrder = env.model<typeof SaleOrderModel>('sale.order');
 
       const partner = await Partner.create({ name: 'Test Customer' });
       const currentYear = new Date().getFullYear();
@@ -61,8 +61,8 @@ describe('sale.order - Intégration avec ir.sequence', () => {
     });
 
     it('should allow custom name override', async () => {
-      const Partner = env.model<typeof ResPartner>('res.partner');
-      const SaleOrder = env.model<typeof SaleOrder>('sale.order');
+      const Partner = env.model<typeof ResPartnerModel>('res.partner');
+      const SaleOrder = env.model<typeof SaleOrderModel>('sale.order');
 
       const partner = await Partner.create({ name: 'Test Customer' });
 
@@ -75,8 +75,8 @@ describe('sale.order - Intégration avec ir.sequence', () => {
     });
 
     it('should continue sequence after custom name', async () => {
-      const Partner = env.model<typeof ResPartner>('res.partner');
-      const SaleOrder = env.model<typeof SaleOrder>('sale.order');
+      const Partner = env.model<typeof ResPartnerModel>('res.partner');
+      const SaleOrder = env.model<typeof SaleOrderModel>('sale.order');
 
       const partner = await Partner.create({ name: 'Test Customer' });
       const currentYear = new Date().getFullYear();
@@ -99,8 +99,8 @@ describe('sale.order - Intégration avec ir.sequence', () => {
 
   describe('Propriété _sequence', () => {
     it('should have _sequence property defined', async () => {
-      const SaleOrder = env.model<typeof SaleOrder>('sale.order');
-      const ModelClass = SaleOrder.constructor as typeof SaleOrder;
+      const saleOrder = env.model<typeof SaleOrderModel>('sale.order');
+      const ModelClass = saleOrder.constructor as typeof SaleOrderModel;
 
       expect(ModelClass._sequence).toBe('sale.order');
     });

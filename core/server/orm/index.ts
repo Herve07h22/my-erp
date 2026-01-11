@@ -1,4 +1,4 @@
-export { ModelRegistry, BaseModel, generateCreateTable } from './model.js';
+export { ModelRegistry, BaseModel, generateCreateTable } from './ModelRegistry.js';
 export { fieldTypes, fieldToColumnDef } from './fields.js';
 export type {
   FieldType,

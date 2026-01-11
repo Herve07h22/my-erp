@@ -3,7 +3,7 @@
  * Fournit l'accès aux modèles et services dans le contexte d'une requête
  */
 
-import type { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import type { Pool, QueryResult, QueryResultRow } from 'pg';
 import type { Request, Response, NextFunction } from 'express';
 import type {
   EnvironmentInterface,
@@ -13,21 +13,8 @@ import type {
   Queryable,
   RecordData,
 } from '../orm/types.js';
-import { BaseModel } from '../orm/model.js';
-
-/**
- * Wrapper pour Pool qui implémente Queryable
- */
-class PoolQueryable implements Queryable {
-  constructor(public readonly pool: Pool) {}
-
-  async query<T extends QueryResultRow = QueryResultRow>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<QueryResult<T>> {
-    return this.pool.query<T>(sql, params as never[]);
-  }
-}
+import { BaseModel } from '../orm/BaseModel.js';
+import { PoolQueryable } from './PoolQueryable.js';
 
 export class Environment implements EnvironmentInterface {
   pool: Queryable;

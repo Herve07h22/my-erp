@@ -8,7 +8,7 @@ import { ModelRegistry } from './core/server/orm/index.js';
 import { generateAllModelAPIs } from './core/server/api/rest.js';
 import { ViewService } from './core/server/api/views.js';
 import { createUploadRouter } from './core/server/api/upload.js';
-import { envMiddleware } from './core/server/services/env.js';
+import { envMiddleware } from './core/server/services/Environment.js';
 
 const { Pool } = pg;
 

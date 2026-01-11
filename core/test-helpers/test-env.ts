@@ -1,10 +1,10 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Environment } from '../server/services/env.js';
-import { ModelRegistry } from '../server/orm/model.js';
+import { Environment } from '../server/services/Environment.js';
+import { ModelRegistry } from '../server/orm/ModelRegistry.js';
 import { ModuleLoader } from '../server/module-loader/index.js';
 import type { ModelRegistryInterface, RecordData, EnvironmentOptions } from '../server/orm/types.js';
-import { BaseModel } from '../server/orm/model.js';
+import { BaseModel } from '@core/server/orm/BaseModel.js';
 import { MockPool } from './mock-pool.js';
 
 const __filename = fileURLToPath(import.meta.url);

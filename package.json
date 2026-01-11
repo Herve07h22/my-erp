@@ -15,7 +15,7 @@
     "db:drop": "dropdb my_erp",
     "db:reset": "pnpm run db:drop && pnpm run db:create && pnpm start",
     "lint": "eslint .",
-    "test": "vitest",
+    "test": "tsc --noEmit && vitest",
     "test:coverage": "vitest --coverage"
   },
   "keywords": [

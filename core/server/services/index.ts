@@ -1,2 +1,2 @@
-export { Environment, envMiddleware } from './env.js';
-export type { EnvRequest } from './env.js';
+export { Environment, envMiddleware } from './Environment.js';
+export type { EnvRequest } from './Environment.js';

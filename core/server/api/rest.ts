@@ -1,6 +1,6 @@
 import express, { Router, Request, Response, NextFunction, Express } from 'express';
 import type { ModelRegistryInterface, Domain } from '../orm/types.js';
-import type { EnvRequest } from '../services/env.js';
+import type { EnvRequest } from '../services/Environment.js';
 import { getQueryString, getQueryInt, getQueryJSON } from '../../shared/utils/query-params.js';
 import { validateRequestBody, isAsyncMethod } from '../orm/guards.js';
 
@@ -101,7 +101,7 @@ export function generateModelAPI(
         const sequenceCode = ModelClass._sequence;
         if (sequenceCode) {
           try {
-            const Sequence = envReq.env('ir.sequence') as {
+            const Sequence = envReq.env('ir.sequence') as unknown as {
               previewByCode: (code: string) => Promise<string | null>;
             };
             const preview = await Sequence.previewByCode(sequenceCode);
