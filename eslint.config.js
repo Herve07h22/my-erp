@@ -25,10 +25,24 @@ export default [
     },
   },
   {
+    // Fichiers de migration en CommonJS
+    files: ['**/migrations/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
+  {
     ignores: [
       'node_modules/**',
       'dist/**',
       'core/client/dist/**',
+      'coverage/**',
       'uploads/**',
       '*.config.js',
       '*.config.ts',
