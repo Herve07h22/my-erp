@@ -193,7 +193,9 @@ export function useTimesheetGrid(
         }
       }
 
-      row.variance = row.totalHours - row.plannedHours;
+      // Variance: écart entre heures effectives totales et heures planifiées
+      // (négatif = temps restant, positif = dépassement)
+      row.variance = (task.effective_hours || 0) - row.plannedHours;
       result.push(row);
     }
 
