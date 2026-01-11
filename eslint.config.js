@@ -26,7 +26,7 @@ export default [
   },
   {
     // Fichiers de migration en CommonJS
-    files: ['**/migrations/*.js'],
+    files: ['**/migrations/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {
