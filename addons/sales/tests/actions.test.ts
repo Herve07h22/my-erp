@@ -5,10 +5,28 @@ import SaleOrder from '../models/sale_order.js';
 
 describe('Sales Addon - Model Actions', () => {
   let env: Awaited<ReturnType<typeof createTestEnv>>['env'];
+  let pool: Awaited<ReturnType<typeof createTestEnv>>['pool'];
 
   beforeEach(async () => {
     const testEnv = await createTestEnv('sales', ['base']);
     env = testEnv.env;
+    pool = testEnv.pool;
+
+    // Seed de la séquence sale.order pour les tests d'auto-génération
+    pool.seed('ir_sequence', [
+      {
+        id: 1,
+        name: 'Devis / Commande',
+        code: 'sale.order',
+        prefix: 'SO%(year)',
+        suffix: '',
+        padding: 5,
+        number_next: 1,
+        number_increment: 1,
+        use_date_range: true,
+        active: true,
+      },
+    ]);
   });
 
   describe('sale.order - actionConfirm', () => {

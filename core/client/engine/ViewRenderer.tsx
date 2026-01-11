@@ -13,12 +13,14 @@ interface NavigateParams {
   model: string;
   viewType: string;
   recordId?: number | null;
+  defaults?: Record<string, unknown>;
 }
 
 interface ViewProps {
   arch: ViewArch;
   model: string;
   recordId?: number | null;
+  initialValues?: Record<string, unknown>;
   onSelect?: (record: RecordData) => void;
   onNew?: () => void;
   onSave?: (record: RecordData) => void;
@@ -34,6 +36,7 @@ interface ViewRendererProps {
   model: string;
   viewType: string;
   recordId: number | null;
+  defaults?: Record<string, unknown>;
   onNavigate?: (params: NavigateParams) => void;
 }
 
@@ -57,6 +60,7 @@ export function ViewRenderer({
   model,
   viewType,
   recordId,
+  defaults,
   onNavigate,
 }: ViewRendererProps): React.ReactElement {
   const { view, loading, error } = useView(model, viewType);
@@ -65,8 +69,18 @@ export function ViewRenderer({
     onNavigate?.({ model, viewType: 'form', recordId: record.id });
   };
 
-  const handleNew = (): void => {
-    onNavigate?.({ model, viewType: 'form', recordId: null });
+  const handleNew = async (): Promise<void> => {
+    // Charger les defaults avant de naviguer (pattern loader)
+    try {
+      const modelPath = model.replace(/\./g, '/');
+      const res = await fetch(`/api/${modelPath}/defaults`);
+      const data = await res.json();
+      const loadedDefaults = data.success ? data.data : {};
+      onNavigate?.({ model, viewType: 'form', recordId: null, defaults: loadedDefaults });
+    } catch {
+      // En cas d'erreur, naviguer sans defaults
+      onNavigate?.({ model, viewType: 'form', recordId: null });
+    }
   };
 
   const handleSave = (): void => {
@@ -125,6 +139,7 @@ export function ViewRenderer({
         arch={arch}
         model={model}
         recordId={recordId}
+        initialValues={defaults}
         onSelect={handleSelect}
         onNew={handleNew}
         onSave={handleSave}

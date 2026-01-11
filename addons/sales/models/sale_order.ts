@@ -1,6 +1,6 @@
 import { BaseModel } from '../../../core/server/orm/index.js';
-import { hasCountProperty } from '../../../core/server/orm/guards.js';
 import type { FieldsCollection } from '../../../core/server/orm/types.js';
+import type IrSequence from '../../base/models/ir_sequence.js';
 
 /**
  * Modèle Commande de vente
@@ -10,6 +10,9 @@ class SaleOrder extends BaseModel {
   static override _name = 'sale.order';
   static override _table = 'sale_order';
   static override _order = 'date_order DESC, id DESC';
+
+  /** Code de la séquence utilisée pour générer les références */
+  static _sequence = 'sale.order';
 
   static override _fields: FieldsCollection = {
     id: { type: 'integer', primaryKey: true },
@@ -64,30 +67,14 @@ class SaleOrder extends BaseModel {
   }
 
   /**
-   * Génère une nouvelle référence de commande
-   */
-  private async _generateName(): Promise<string> {
-    const year = new Date().getFullYear();
-    const result = await this.env.pool.query(
-      `SELECT COUNT(*) as count FROM sale_order WHERE name LIKE $1`,
-      [`SO${year}%`]
-    );
-    const firstRow = result.rows[0];
-
-    if (!hasCountProperty(firstRow)) {
-      return `SO${year}00001`;
-    }
-
-    const count = parseInt(String(firstRow.count), 10) + 1;
-    return `SO${year}${String(count).padStart(5, '0')}`;
-  }
-
-  /**
-   * Crée une commande avec génération automatique du nom
+   * Crée une commande avec génération automatique du nom via ir.sequence
    */
   override async create(values: Record<string, unknown>): Promise<SaleOrder> {
     if (!values.name) {
-      values.name = await this._generateName();
+      const Sequence = this.env.model('ir.sequence') as IrSequence;
+      values.name = await Sequence.nextByCode(
+        (this.constructor as typeof SaleOrder)._sequence
+      );
     }
     return (await super.create(values)) as SaleOrder;
   }

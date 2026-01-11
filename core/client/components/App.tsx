@@ -14,12 +14,14 @@ interface CurrentView {
   viewType: string;
   recordId: number | null;
   title: string;
+  defaults?: Record<string, unknown>;
 }
 
 interface NavigateParams {
   model: string;
   viewType: string;
   recordId?: number | null;
+  defaults?: Record<string, unknown>;
 }
 
 interface ActionResponse {
@@ -146,12 +148,13 @@ export function App(): React.ReactElement {
     }
   };
 
-  const handleNavigate = ({ model, viewType, recordId }: NavigateParams): void => {
+  const handleNavigate = ({ model, viewType, recordId, defaults }: NavigateParams): void => {
     const view: CurrentView = {
       model,
       viewType,
       recordId: recordId ?? null,
       title: currentView?.title || model,
+      defaults,
     };
     navigateTo(view);
   };
@@ -215,6 +218,7 @@ export function App(): React.ReactElement {
                   model={currentView.model}
                   viewType={currentView.viewType}
                   recordId={currentView.recordId}
+                  defaults={currentView.defaults}
                   onNavigate={handleNavigate}
                 />
               </div>

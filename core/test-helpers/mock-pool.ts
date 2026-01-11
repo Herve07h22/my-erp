@@ -166,6 +166,11 @@ export class MockPool implements Queryable {
    * Gère les UPDATE
    */
   private handleUpdate(sql: string, params: unknown[]): QueryResult {
+    // Cas spécial: incrémentation atomique de séquence (ir.sequence)
+    if (sql.includes('number_next = number_next + number_increment')) {
+      return this.handleSequenceIncrement(sql, params);
+    }
+
     const match = sql.match(
       /UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+?))?(?:\s+RETURNING\s+(.+))?\s*$/i
     );
@@ -217,6 +222,52 @@ export class MockPool implements Queryable {
     return {
       rows: resultRows as QueryResultRow[],
       rowCount: rows.length,
+      command: 'UPDATE',
+      oid: 0,
+      fields: [],
+    };
+  }
+
+  /**
+   * Gère l'incrémentation atomique des séquences (ir.sequence)
+   * Pattern: UPDATE ir_sequence SET number_next = number_next + number_increment ... RETURNING ...
+   */
+  private handleSequenceIncrement(sql: string, params: unknown[]): QueryResult {
+    const table = this.tables.get('ir_sequence');
+
+    if (!table) {
+      return { rows: [], rowCount: 0, command: 'UPDATE', oid: 0, fields: [] };
+    }
+
+    // Extraire le code de la séquence depuis WHERE code = $1
+    const code = params[0] as string;
+    const seq = table.find((r) => r.code === code && r.active);
+
+    if (!seq) {
+      return { rows: [], rowCount: 0, command: 'UPDATE', oid: 0, fields: [] };
+    }
+
+    // Récupérer la valeur actuelle avant incrément
+    const currentNumber = seq.number_next as number;
+    const increment = (seq.number_increment as number) || 1;
+
+    // Incrémenter
+    seq.number_next = currentNumber + increment;
+    seq.write_date = new Date().toISOString();
+
+    // Construire le résultat RETURNING avec current_number = valeur avant incrément
+    const result = {
+      id: seq.id,
+      prefix: seq.prefix || '',
+      suffix: seq.suffix || '',
+      padding: seq.padding || 5,
+      current_number: currentNumber,
+      use_date_range: seq.use_date_range ?? true,
+    };
+
+    return {
+      rows: [result] as QueryResultRow[],
+      rowCount: 1,
       command: 'UPDATE',
       oid: 0,
       fields: [],
@@ -439,6 +490,12 @@ export class MockPool implements Queryable {
     const trimmed = value.trim();
     if (trimmed === 'NULL' || trimmed === 'null') {
       return null;
+    }
+    if (trimmed === 'true' || trimmed === 'TRUE') {
+      return true;
+    }
+    if (trimmed === 'false' || trimmed === 'FALSE') {
+      return false;
     }
     if (trimmed.match(/^-?\d+$/)) {
       return parseInt(trimmed, 10);

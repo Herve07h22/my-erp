@@ -75,6 +75,51 @@ export function generateModelAPI(
     }
   );
 
+  // GET /api/model/defaults - Retourne les valeurs par défaut pour un nouvel enregistrement
+  router.get(
+    `${base}/defaults`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const envReq = getEnvRequest(req);
+        const Model = envReq.env(modelName);
+        const ModelClass = Model.constructor as typeof Model.constructor & {
+          _fields: Record<string, { default?: unknown | (() => unknown) }>;
+          _sequence?: string;
+        };
+
+        const defaults: Record<string, unknown> = {};
+
+        // Récupérer les valeurs par défaut des champs
+        for (const [fieldName, field] of Object.entries(ModelClass._fields)) {
+          if (field.default !== undefined) {
+            defaults[fieldName] =
+              typeof field.default === 'function' ? field.default() : field.default;
+          }
+        }
+
+        // Si le modèle a une séquence, obtenir l'aperçu de la prochaine valeur
+        const sequenceCode = ModelClass._sequence;
+        if (sequenceCode) {
+          try {
+            const Sequence = envReq.env('ir.sequence') as {
+              previewByCode: (code: string) => Promise<string | null>;
+            };
+            const preview = await Sequence.previewByCode(sequenceCode);
+            if (preview) {
+              defaults.name = preview;
+            }
+          } catch {
+            // Séquence non trouvée, on ignore
+          }
+        }
+
+        res.json({ success: true, data: defaults });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   // GET /api/model/:id - Récupère un enregistrement
   router.get(
     `${base}/:id`,

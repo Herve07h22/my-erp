@@ -310,6 +310,7 @@ interface FormViewProps {
   arch: ViewArch;
   model: string;
   recordId?: number | null;
+  initialValues?: Record<string, unknown>;
   onSave?: (record: RecordData) => void;
   onCancel?: () => void;
 }
@@ -326,6 +327,7 @@ export function FormView({
   arch,
   model,
   recordId,
+  initialValues,
   onSave,
   onCancel,
 }: FormViewProps): React.ReactElement {
@@ -333,7 +335,8 @@ export function FormView({
     model,
     recordId ?? null
   );
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  // Utiliser initialValues pour les nouveaux enregistrements (pattern loader)
+  const [values, setValues] = useState<Record<string, unknown>>(initialValues ?? {});
   const [dirty, setDirty] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [showErrors, setShowErrors] = useState(false);
