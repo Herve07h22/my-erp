@@ -1,28 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMenus } from '../engine/hooks';
-import { ViewRenderer } from '../engine/ViewRenderer';
-
-interface Menu {
-  id: string;
-  label: string;
-  action?: string;
-  children?: Menu[];
-}
-
-interface CurrentView {
-  model: string;
-  viewType: string;
-  recordId: number | null;
-  title: string;
-  defaults?: Record<string, unknown>;
-}
-
-interface NavigateParams {
-  model: string;
-  viewType: string;
-  recordId?: number | null;
-  defaults?: Record<string, unknown>;
-}
+import { AppHeader } from './layout/AppHeader';
+import { Sidebar } from './layout/Sidebar';
+import { MainContent } from './layout/MainContent';
+import type { Menu, CurrentView, NavigateParams } from './layout/types';
 
 interface ActionResponse {
   success: boolean;
@@ -34,7 +15,7 @@ interface ActionResponse {
 }
 
 /**
- * Construit l'URL à partir de l'état de la vue
+ * Construit l'URL a partir de l'etat de la vue
  */
 function buildUrl(view: CurrentView): string {
   const path = `/${view.model.replace(/\./g, '/')}/${view.viewType}`;
@@ -45,13 +26,12 @@ function buildUrl(view: CurrentView): string {
 }
 
 /**
- * Parse l'URL pour extraire l'état de la vue
+ * Parse l'URL pour extraire l'etat de la vue
  */
 function parseUrl(pathname: string): Partial<CurrentView> | null {
   const parts = pathname.split('/').filter(Boolean);
   if (parts.length < 2) return null;
 
-  // Format: /res/partner/list ou /res/partner/form/123
   const viewType = parts[parts.length - 1].match(/^\d+$/)
     ? parts[parts.length - 2]
     : parts[parts.length - 1];
@@ -60,10 +40,7 @@ function parseUrl(pathname: string): Partial<CurrentView> | null {
     ? parseInt(parts[parts.length - 1], 10)
     : null;
 
-  const modelParts = recordId
-    ? parts.slice(0, -2)
-    : parts.slice(0, -1);
-
+  const modelParts = recordId ? parts.slice(0, -2) : parts.slice(0, -1);
   const model = modelParts.join('.');
 
   if (!model || !viewType) return null;
@@ -73,12 +50,13 @@ function parseUrl(pathname: string): Partial<CurrentView> | null {
 
 /**
  * Composant principal de l'application ERP
+ * Compose AppHeader, Sidebar et MainContent
  */
 export function App(): React.ReactElement {
   const { menus, loading: menusLoading } = useMenus();
   const [currentView, setCurrentView] = useState<CurrentView | null>(null);
 
-  // Restaurer l'état depuis l'URL au chargement initial
+  // Restaurer l'etat depuis l'URL au chargement initial
   useEffect(() => {
     const parsed = parseUrl(window.location.pathname);
     if (parsed && parsed.model) {
@@ -91,13 +69,12 @@ export function App(): React.ReactElement {
     }
   }, []);
 
-  // Écouter les événements popstate (back/forward du navigateur)
+  // Ecouter les evenements popstate (back/forward)
   useEffect(() => {
     const handlePopState = (event: PopStateEvent): void => {
       if (event.state) {
         setCurrentView(event.state as CurrentView);
       } else {
-        // Pas d'état dans l'historique, parser l'URL
         const parsed = parseUrl(window.location.pathname);
         if (parsed && parsed.model) {
           setCurrentView({
@@ -116,15 +93,18 @@ export function App(): React.ReactElement {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigateTo = useCallback((view: CurrentView, replace: boolean = false): void => {
-    const url = buildUrl(view);
-    if (replace) {
-      window.history.replaceState(view, '', url);
-    } else {
-      window.history.pushState(view, '', url);
-    }
-    setCurrentView(view);
-  }, []);
+  const navigateTo = useCallback(
+    (view: CurrentView, replace: boolean = false): void => {
+      const url = buildUrl(view);
+      if (replace) {
+        window.history.replaceState(view, '', url);
+      } else {
+        window.history.pushState(view, '', url);
+      }
+      setCurrentView(view);
+    },
+    []
+  );
 
   const handleMenuClick = async (menu: Menu): Promise<void> => {
     if (menu.action) {
@@ -148,7 +128,12 @@ export function App(): React.ReactElement {
     }
   };
 
-  const handleNavigate = ({ model, viewType, recordId, defaults }: NavigateParams): void => {
+  const handleNavigate = ({
+    model,
+    viewType,
+    recordId,
+    defaults,
+  }: NavigateParams): void => {
     const view: CurrentView = {
       model,
       viewType,
@@ -159,77 +144,18 @@ export function App(): React.ReactElement {
     navigateTo(view);
   };
 
-  const renderMenu = (menu: Menu, depth: number = 0): React.ReactElement => {
-    return (
-      <li key={menu.id} className={`menu-item depth-${depth}`}>
-        <button
-          className="menu-link"
-          onClick={() => handleMenuClick(menu)}
-          disabled={!menu.action && !menu.children?.length}
-        >
-          {menu.label}
-        </button>
-        {menu.children && menu.children.length > 0 && (
-          <ul className="menu-children">
-            {menu.children.map((child) => renderMenu(child, depth + 1))}
-          </ul>
-        )}
-      </li>
-    );
-  };
-
   return (
     <div className="erp-app">
-      <header className="app-header">
-        <h1 className="app-title">My ERP</h1>
-        <div className="app-user">
-          <span>Utilisateur</span>
-        </div>
-      </header>
+      <AppHeader />
 
       <div className="app-container">
-        <nav className="app-sidebar">
-          {menusLoading ? (
-            <div className="sidebar-loading">Chargement...</div>
-          ) : (
-            <ul className="menu-root">{menus.map((menu: Menu) => renderMenu(menu))}</ul>
-          )}
-        </nav>
+        <Sidebar
+          menus={menus}
+          loading={menusLoading}
+          onMenuClick={handleMenuClick}
+        />
 
-        <main className="app-main">
-          {currentView ? (
-            <>
-              <div className="main-header">
-                <h2>{currentView.title}</h2>
-                <div className="breadcrumb">
-                  <span>{currentView.model}</span>
-                  <span>/</span>
-                  <span>{currentView.viewType}</span>
-                  {currentView.recordId && (
-                    <>
-                      <span>/</span>
-                      <span>#{currentView.recordId}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="main-content">
-                <ViewRenderer
-                  model={currentView.model}
-                  viewType={currentView.viewType}
-                  recordId={currentView.recordId}
-                  defaults={currentView.defaults}
-                  onNavigate={handleNavigate}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="main-welcome">
-              <h2>Bienvenue dans My ERP</h2>
-              <p>Sélectionnez un menu pour commencer.</p>
-            </div>
-          )}
-        </main>
+        <MainContent currentView={currentView} onNavigate={handleNavigate} />
       </div>
     </div>
   );

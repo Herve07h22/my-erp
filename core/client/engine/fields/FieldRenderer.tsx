@@ -1,8 +1,12 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import type { FieldDefinition } from '../hooks/useModel';
+import { TextField } from './TextField';
+import { NumberField } from './NumberField';
+import { BooleanField } from './BooleanField';
+import { DateField } from './DateField';
+import { SelectionField } from './SelectionField';
 import { Many2OneField } from './Many2OneField';
 import { ImageField } from './ImageField';
-import { ErpDate, ErpDateTime } from '../../../shared/erp-date/index.js';
 
 interface FieldRendererProps {
   name: string;
@@ -15,6 +19,7 @@ interface FieldRendererProps {
 
 /**
  * Composant de rendu dynamique des champs selon leur type
+ * Delegue aux composants de champs specifiques
  */
 export function FieldRenderer({
   name,
@@ -32,123 +37,110 @@ export function FieldRenderer({
   const fieldLabel = label || name;
   const hasError = !!error;
 
-  const commonProps = {
-    id: name,
-    name,
-    disabled: readonly,
-    required,
-    className: `field-input field-${type}${hasError ? ' field-error' : ''}`,
-  };
-
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ): void => {
-    const target = e.target as HTMLInputElement;
-    const newValue = target.type === 'checkbox' ? target.checked : target.value;
-    onChange(newValue);
-  };
-
   const renderField = (): React.ReactElement => {
     switch (type) {
       case 'string':
         return (
-          <input
-            type="text"
+          <TextField
+            name={name}
             value={(value as string) || ''}
-            onChange={handleChange}
-            {...commonProps}
+            onChange={onChange as (v: string) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
           />
         );
 
       case 'text':
         return (
-          <textarea
+          <TextField
+            name={name}
             value={(value as string) || ''}
-            onChange={handleChange}
-            rows={4}
-            {...commonProps}
+            onChange={onChange as (v: string) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
+            multiline
           />
         );
 
       case 'integer':
         return (
-          <input
-            type="number"
-            value={(value as number | string) ?? ''}
-            onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
-            step={1}
-            {...commonProps}
+          <NumberField
+            name={name}
+            value={(value as number) ?? null}
+            onChange={onChange as (v: number) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
+            integer
           />
         );
 
       case 'float':
       case 'monetary':
         return (
-          <input
-            type="number"
-            value={(value as number | string) ?? ''}
-            onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            step={0.01}
-            {...commonProps}
+          <NumberField
+            name={name}
+            value={(value as number) ?? null}
+            onChange={onChange as (v: number) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
           />
         );
 
       case 'boolean':
         return (
-          <input
-            type="checkbox"
-            checked={(value as boolean) || false}
-            onChange={handleChange}
-            {...commonProps}
+          <BooleanField
+            name={name}
+            value={(value as boolean) || false}
+            onChange={onChange as (v: boolean) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
           />
         );
 
-      case 'date': {
-        const dateValue = ErpDate.parse(value);
+      case 'date':
         return (
-          <input
-            type="date"
-            value={dateValue?.toISOString() ?? ''}
-            onChange={handleChange}
-            {...commonProps}
+          <DateField
+            name={name}
+            value={value}
+            onChange={onChange as (v: string) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
           />
         );
-      }
 
-      case 'datetime': {
-        // Format pour datetime-local: YYYY-MM-DDTHH:mm
-        const dtValue = ErpDateTime.parse(value);
-        const dtInputValue = dtValue
-          ? `${dtValue.toErpDate().toISOString()}T${String(dtValue.hours).padStart(2, '0')}:${String(dtValue.minutes).padStart(2, '0')}`
-          : '';
+      case 'datetime':
         return (
-          <input
-            type="datetime-local"
-            value={dtInputValue}
-            onChange={handleChange}
-            {...commonProps}
+          <DateField
+            name={name}
+            value={value}
+            onChange={onChange as (v: string) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
+            withTime
           />
         );
-      }
 
       case 'selection':
         return (
-          <select
+          <SelectionField
+            name={name}
             value={(value as string) || ''}
-            onChange={handleChange}
-            {...commonProps}
-          >
-            <option value="">-- Sélectionner --</option>
-            {options?.map(([optValue, optLabel]) => (
-              <option key={optValue} value={optValue}>
-                {optLabel}
-              </option>
-            ))}
-          </select>
+            options={options || []}
+            onChange={onChange as (v: string) => void}
+            disabled={readonly}
+            required={required}
+            hasError={hasError}
+          />
         );
 
       case 'many2one': {
-        // Le backend retourne { id, name } pour les many2one, extraire l'ID
         let many2oneValue: number | null = null;
         if (value !== null && value !== undefined) {
           if (
@@ -175,7 +167,6 @@ export function FieldRenderer({
       }
 
       case 'image': {
-        // Vérifier si c'est un champ multiple (photo_urls) via le nom ou widget
         const isMultiple = name.includes('_urls') || name === 'photo_urls';
         return (
           <ImageField
