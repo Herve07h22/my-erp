@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestEnv, createTestRecord } from '../../../core/test-helpers/test-env.js';
+import { createTestEnv } from '../../../core/test-helpers/test-env.js';
 import type { RecordData } from '../../../core/server/orm/types.js';
 import TimesheetLine from '../models/timesheet.js';
 import ProjectTask from '../../project/models/task.js';

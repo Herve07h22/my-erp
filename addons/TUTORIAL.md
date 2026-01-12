@@ -221,6 +221,11 @@ class Property extends BaseModel {
       relation: 'res.users',
       label: 'Agent immobilier',
     },
+    seller_id: {
+      type: 'many2one',
+      relation: 'res.users',
+      label: 'Vendeur (utilisateur ayant réalisé la vente)',
+    },
     
     // Description et photos
     description: { 
@@ -266,8 +271,13 @@ class Property extends BaseModel {
 
   /**
    * Marque le bien comme vendu
+   * @throws Error si aucun vendeur n'est assigné
    */
   async actionSold(): Promise<boolean> {
+    const data = await this.read(['seller_id']);
+    if (!data[0]?.seller_id) {
+      throw new Error('Veuillez assigner un vendeur avant de marquer le bien comme vendu');
+    }
     return this.write({ state: 'sold' });
   }
 
@@ -340,6 +350,7 @@ async function up(pool) {
       state VARCHAR(64) DEFAULT 'draft',
       partner_id INTEGER REFERENCES res_partner(id),
       agent_id INTEGER REFERENCES res_users(id),
+      seller_id INTEGER REFERENCES res_users(id),
       description TEXT,
       photo_urls JSONB DEFAULT '[]'::jsonb,
       main_photo_url TEXT,
@@ -535,7 +546,7 @@ Les vues définissent comment afficher et éditer les données.
             },
             {
               "label": "Vente",
-              "fields": ["selling_price", "partner_id", "agent_id"]
+              "fields": ["selling_price", "partner_id", "agent_id", "seller_id"]
             }
           ],
           "notebook": [
@@ -823,6 +834,137 @@ addons/real_estate/
 │   └── actions.test.ts    # Tests des actions métier (optionnel)
 ```
 
+### Tester les actions métier
+
+Les actions métier (méthodes `action*` des modèles) contiennent souvent de la logique importante qui doit être testée. Le framework fournit un helper `createTestEnv` qui crée un environnement de test complet avec une base de données en mémoire.
+
+Par exemple, notre méthode `actionSold()` vérifie qu'un vendeur est assigné avant de marquer le bien comme vendu.
+
+**`addons/real_estate/tests/actions.test.ts`** :
+
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { createTestEnv } from '../../../core/test-helpers/test-env.js';
+import type { RecordData } from '../../../core/server/orm/types.js';
+import Property from '../models/property.js';
+
+describe('Real Estate - Actions métier', () => {
+  let env: Awaited<ReturnType<typeof createTestEnv>>['env'];
+
+  beforeEach(async () => {
+    // Créer un environnement de test avec le module real_estate et ses dépendances
+    const testEnv = await createTestEnv('real_estate', ['base']);
+    env = testEnv.env;
+  });
+
+  describe('actionSold', () => {
+    it('devrait lever une erreur si aucun vendeur n\'est assigné', async () => {
+      const Property = env.model<Property>('real_estate.property');
+
+      // Créer un bien sans seller_id
+      const record: RecordData = {
+        id: 1,
+        name: 'Maison de test',
+        property_type: 'house',
+        city: 'Paris',
+        selling_price: 300000,
+        state: 'published',
+        // Pas de seller_id
+      };
+
+      const created = await Property.create(record);
+
+      // Vérifier que l'action lève une erreur
+      await expect(created.actionSold()).rejects.toThrow(
+        'Veuillez assigner un vendeur avant de marquer le bien comme vendu'
+      );
+
+      // Vérifier que le statut n'a pas changé
+      const property = await Property.browse(1);
+      expect(property.first?.state).toBe('published');
+    });
+
+    it('devrait passer le bien en statut "sold" si un vendeur est assigné', async () => {
+      const Property = env.model<Property>('real_estate.property');
+
+      // Créer un bien avec un seller_id
+      const record: RecordData = {
+        id: 1,
+        name: 'Appartement de test',
+        property_type: 'apartment',
+        city: 'Lyon',
+        selling_price: 250000,
+        state: 'published',
+        seller_id: 1, // Vendeur assigné
+      };
+
+      const created = await Property.create(record);
+      const result = await created.actionSold();
+
+      expect(result).toBe(true);
+
+      // Vérifier que le statut a bien changé en base
+      const updated = await Property.browse(1);
+      expect(updated.first?.state).toBe('sold');
+    });
+  });
+
+  describe('actionPublish', () => {
+    it('devrait passer le bien de "draft" à "published"', async () => {
+      const Property = env.model<Property>('real_estate.property');
+
+      const record: RecordData = {
+        id: 1,
+        name: 'Terrain de test',
+        property_type: 'land',
+        city: 'Marseille',
+        selling_price: 150000,
+        state: 'draft',
+      };
+
+      const created = await Property.create(record);
+      const result = await created.actionPublish();
+
+      expect(result).toBe(true);
+
+      const updated = await Property.browse(1);
+      expect(updated.first?.state).toBe('published');
+    });
+  });
+
+});
+```
+
+**Explication du test :**
+
+1. **`createTestEnv`** : Crée un environnement de test complet avec une base de données en mémoire. Les modèles du module et de ses dépendances sont chargés.
+
+2. **Création d'enregistrements** : On crée de vrais enregistrements avec `Property.create()` pour tester les actions.
+
+3. **Test du cas d'erreur** : On vérifie que `actionSold()` lève une exception quand `seller_id` est absent, et que le statut reste inchangé.
+
+4. **Test du cas nominal** : On vérifie que `actionSold()` change bien le statut à "sold" quand un vendeur est assigné.
+
+5. **Vérification en base** : Après chaque action, on relit l'enregistrement avec `browse()` pour vérifier que les modifications ont bien été persistées.
+
+**Lancer les tests** :
+
+```bash
+# Lancer tous les tests du module
+pnpm test -- --run addons/real_estate
+
+# Lancer uniquement les tests des actions
+pnpm test -- --run addons/real_estate/tests/actions.test.ts
+```
+
+**Bonnes pratiques pour les tests d'actions métier** :
+
+- Utiliser `createTestEnv` pour avoir un environnement réaliste
+- Créer des enregistrements de test avec des données représentatives
+- Tester les cas d'erreur (validations, contraintes métier)
+- Tester les cas nominaux (happy path)
+- Toujours vérifier l'état final en base avec `browse()`
+
 ## Étape 11 : Tester manuellement l'addon
 
 1. **Créer une annonce** :
@@ -889,8 +1031,9 @@ Vous avez appris à :
 - ✅ Configurer une séquence pour générer des références automatiques (ex: `PROP2026-00001`)
 - ✅ Définir des vues (formulaire et liste)
 - ✅ Créer des actions et menus
-- ✅ Ajouter des méthodes métier au modèle
+- ✅ Ajouter des méthodes métier au modèle avec validation
 - ✅ Gérer les images (via URLs pour l'instant)
 - ✅ Ajouter des tests automatiques pour valider les vues
+- ✅ Tester les actions métier avec des mocks (validation du seller avant vente)
 
 Le système est maintenant prêt à gérer vos annonces immobilières !
