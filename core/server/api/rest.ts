@@ -303,6 +303,9 @@ export function createAPIRouter(registry: ModelRegistryInterface): Router {
 
 /**
  * Génère les routes pour tous les modèles enregistrés
+ * Les modèles avec plus de segments (ex: sale.order.line) sont enregistrés
+ * avant ceux avec moins de segments (ex: sale.order) pour éviter les conflits
+ * de routes Express (ex: /api/sale/order/:id capturerait /api/sale/order/line)
  */
 export function generateAllModelAPIs(
   app: Express,
@@ -310,7 +313,14 @@ export function generateAllModelAPIs(
 ): void {
   const router = createAPIRouter(registry);
 
-  for (const modelName of registry.getModelNames()) {
+  // Trier les modèles par nombre de segments (plus de segments d'abord)
+  const modelNames = registry.getModelNames().sort((a, b) => {
+    const depthA = a.split('.').length;
+    const depthB = b.split('.').length;
+    return depthB - depthA; // Ordre décroissant
+  });
+
+  for (const modelName of modelNames) {
     generateModelAPI(router, modelName, registry);
     console.log(`  Generated API for: ${modelName}`);
   }
