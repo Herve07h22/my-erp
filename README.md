@@ -2,6 +2,29 @@
 
 ERP modulaire open-source inspiré de l'architecture d'Odoo, construit avec Node.js, TypeScript, PostgreSQL et React.
 
+## Description
+
+My ERP est un framework de développement d'applications métier qui reprend les concepts éprouvés d'Odoo :
+
+- **ORM avec héritage** : Les modèles peuvent être étendus par d'autres modules sans modifier le code source original
+- **API REST auto-générée** : Chaque modèle expose automatiquement des endpoints CRUD
+- **Vues dynamiques** : Les interfaces utilisateur sont définies en JSON et rendues dynamiquement par le client React
+- **Architecture modulaire** : Les fonctionnalités métier sont organisées en addons indépendants avec gestion des dépendances
+- **Domaines de recherche** : Syntaxe de filtrage puissante inspirée d'Odoo
+
+Le projet est conçu pour être facilement extensible : ajoutez vos propres modules dans le dossier `addons/` et ils seront automatiquement découverts et chargés.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [README.md](./README.md) | Ce fichier - Vue d'ensemble et guide de démarrage |
+| [core/client/README.md](./core/client/README.md) | Architecture du client React (API, stores, composants, diagramme de flux) |
+| [core/server/README.md](./core/server/README.md) | Architecture du serveur (API REST, module loader, diagramme de flux) |
+| [core/server/orm/README.md](./core/server/orm/README.md) | Documentation complète de l'ORM (modèles, champs, domaines, héritage) |
+| [addons/TUTORIAL.md](./addons/TUTORIAL.md) | Tutoriel complet : créer un addon de A à Z |
+| [CLAUDE.md](./CLAUDE.md) | Instructions pour Claude Code (référence technique) |
+
 ## Architecture
 
 ```
