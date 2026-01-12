@@ -644,106 +644,7 @@ Même si basique, il est requis.
 }
 ```
 
-## Étape 8 : Gérer les images avec upload
-
-Le système supporte maintenant l'upload de fichiers ! Vous pouvez utiliser le type de champ `image` pour une image unique, ou un champ `json` pour plusieurs images.
-
-### Utilisation du type `image` pour une photo principale
-
-Dans votre modèle, utilisez le type `image` pour stocker l'URL d'une image unique :
-
-```typescript
-main_photo_url: {
-  type: 'image',
-  label: 'Photo principale (URL)',
-  size: 512,
-},
-```
-
-Dans la migration, créez une colonne TEXT :
-
-```javascript
-main_photo_url TEXT,
-```
-
-### Utilisation du type `json` pour plusieurs photos
-
-Pour gérer plusieurs photos, utilisez le type `json` qui stocke un tableau d'URLs :
-
-```typescript
-photo_urls: {
-  type: 'json',
-  label: 'URLs des photos',
-  default: (): string[] => [],
-},
-```
-
-Dans la migration :
-
-```javascript
-photo_urls JSONB DEFAULT '[]'::jsonb,
-```
-
-**Important** : Le composant `ImageField` détecte automatiquement si un champ est pour plusieurs images en vérifiant si le nom se termine par `_urls` ou s'il s'appelle `photo_urls`.
-
-### Comment ça fonctionne
-
-1. **Backend** : Le système expose deux routes API :
-   - `POST /api/upload` : Upload d'un seul fichier
-   - `POST /api/upload/multiple` : Upload de plusieurs fichiers
-   - `GET /uploads/:filename` : Servir les fichiers uploadés
-
-2. **Frontend** : Le composant `ImageField` :
-   - Affiche un aperçu des images existantes
-   - Permet de sélectionner un ou plusieurs fichiers
-   - Upload automatiquement les fichiers vers le serveur
-   - Met à jour le champ avec l'URL retournée
-
-3. **Stockage** : Les fichiers sont stockés dans le dossier `uploads/` à la racine du projet avec des noms uniques.
-
-### Exemple dans la vue
-
-Dans votre fichier de vue JSON, les champs `image` et `json` (pour les photos) sont automatiquement rendus avec le composant d'upload :
-
-```json
-{
-  "notebook": [
-    {
-      "label": "Photos",
-      "content": {
-        "fields": ["main_photo_url", "photo_urls"]
-      }
-    }
-  ]
-}
-```
-
-Le champ `main_photo_url` (type `image`) affichera un bouton pour uploader une seule image.
-
-Le champ `photo_urls` (type `json` avec nom se terminant par `_urls`) affichera une galerie avec possibilité d'ajouter plusieurs images.
-
-### Configuration
-
-Les fichiers sont stockés dans `uploads/` (créé automatiquement). Pour changer l'emplacement, modifiez `core/server/api/upload.ts`.
-
-**Limites par défaut** :
-- Taille max : 10 MB par fichier
-- Formats acceptés : JPEG, PNG, GIF, WebP
-- Max 10 fichiers pour l'upload multiple
-
-### Note sur la migration
-
-Si vous avez déjà créé votre addon avec des champs `string` pour les images, vous pouvez les convertir en `image` :
-
-```sql
--- Dans une nouvelle migration
-ALTER TABLE real_estate_property 
-  ALTER COLUMN main_photo_url TYPE TEXT;
-```
-
-Le système fonctionne avec les deux types (`string` et `image`), mais `image` est recommandé pour une meilleure sémantique.
-
-## Étape 9 : Activer l'addon
+## Étape 8 : Activer l'addon
 
 1. **Ajouter le module à la configuration** :
 
@@ -786,7 +687,7 @@ Le serveur va :
 - Vous devriez voir un nouveau menu "Immobilier" dans la barre latérale
 - Cliquez dessus pour accéder aux annonces
 
-## Étape 10 : Ajouter les tests automatiques
+## Étape 9 : Ajouter les tests automatiques
 
 Chaque addon devrait avoir des tests pour valider ses vues. Le framework fournit un helper réutilisable.
 
@@ -965,13 +866,12 @@ pnpm test -- --run addons/real_estate/tests/actions.test.ts
 - Tester les cas nominaux (happy path)
 - Toujours vérifier l'état final en base avec `browse()`
 
-## Étape 11 : Tester manuellement l'addon
+## Étape 10 : Tester manuellement l'addon
 
 1. **Créer une annonce** :
    - Cliquez sur "Toutes les annonces"
    - Cliquez sur "Nouveau"
-   - Remplissez les champs (titre, ville, prix, etc.)
-   - Ajoutez des URLs de photos dans le champ `photo_urls` (format JSON : `["https://example.com/photo1.jpg", "https://example.com/photo2.jpg"]`)
+   - Remplissez les champs (titre, ville, prix, photos, etc.)
    - Cliquez sur "Enregistrer"
 
 2. **Tester les actions** :
@@ -1010,15 +910,11 @@ Pour aller plus loin, vous pourriez :
    - Créer un modèle `real_estate.visit` pour les visites
    - Créer un modèle `real_estate.offer` pour les offres d'achat
 
-2. **Améliorer les photos** :
-   - Implémenter un vrai upload de fichiers
-   - Créer un widget personnalisé pour gérer plusieurs photos
-
-3. **Ajouter des vues spécialisées** :
+2. **Ajouter des vues spécialisées** :
    - Vue carte (map) pour localiser les biens
    - Vue galerie pour afficher les photos
 
-4. **Ajouter des calculs** :
+3. **Ajouter des calculs** :
    - Prix au m² calculé automatiquement
    - Estimation automatique basée sur le quartier
 
@@ -1032,7 +928,6 @@ Vous avez appris à :
 - ✅ Définir des vues (formulaire et liste)
 - ✅ Créer des actions et menus
 - ✅ Ajouter des méthodes métier au modèle avec validation
-- ✅ Gérer les images (via URLs pour l'instant)
 - ✅ Ajouter des tests automatiques pour valider les vues
 - ✅ Tester les actions métier avec des mocks (validation du seller avant vente)
 
